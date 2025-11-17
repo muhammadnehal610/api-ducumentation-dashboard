@@ -1,10 +1,12 @@
+
+
 import { Request, Response, NextFunction } from 'express';
 import Endpoint from '../models/Endpoint';
 
 // @desc    Get all endpoints for a service
 // @route   GET /api/endpoints?serviceId=:serviceId
 // @access  Public
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const getEndpoints = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { serviceId } = req.query;
@@ -21,7 +23,7 @@ export const getEndpoints = async (req: Request, res: Response, next: NextFuncti
 // @desc    Get single endpoint
 // @route   GET /api/endpoints/:id
 // @access  Public
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const getEndpoint = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const endpoint = await Endpoint.findById(req.params.id);
@@ -37,7 +39,7 @@ export const getEndpoint = async (req: Request, res: Response, next: NextFunctio
 // @desc    Create an endpoint
 // @route   POST /api/endpoints
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const createEndpoint = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.body.serviceId) {
@@ -53,7 +55,7 @@ export const createEndpoint = async (req: Request, res: Response, next: NextFunc
 // @desc    Update an endpoint
 // @route   PUT /api/endpoints/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const updateEndpoint = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const endpoint = await Endpoint.findByIdAndUpdate(req.params.id, req.body, {
@@ -72,7 +74,7 @@ export const updateEndpoint = async (req: Request, res: Response, next: NextFunc
 // @desc    Delete an endpoint
 // @route   DELETE /api/endpoints/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const deleteEndpoint = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const endpoint = await Endpoint.findByIdAndDelete(req.params.id);

@@ -1,48 +1,36 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
-// FIX: Changed alias imports to relative paths with extensions for module resolution.
-import DashboardLayout from './components/layout/DashboardLayout.tsx';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/auth/LoginPage.tsx';
 import RegisterPage from './pages/auth/RegisterPage.tsx';
-import ServiceListPage from './pages/ServiceListPage.tsx';
-import Overview from './pages/dashboard/Overview.tsx';
-import EndpointsList from './pages/dashboard/EndpointsList.tsx';
-import EndpointDetail from './pages/dashboard/EndpointDetail.tsx';
-import EndpointCreateEdit from './pages/dashboard/EndpointCreateEdit.tsx';
-import ApiPlayground from './pages/dashboard/ApiPlayground.tsx';
-import Models from './pages/dashboard/Models.tsx';
-import Schemas from './pages/dashboard/Schemas.tsx';
-import AuthenticationInfo from './pages/dashboard/AuthenticationInfo.tsx';
-import Flows from './pages/dashboard/Flows.tsx';
-import ErrorCodes from './pages/dashboard/ErrorCodes.tsx';
-import Changelog from './pages/dashboard/Changelog.tsx';
-import Settings from './pages/dashboard/Settings.tsx';
-import Modules from './pages/dashboard/Modules.tsx';
-import UserManagement from './pages/dashboard/UserManagement.tsx';
-import ServiceFormModal from './components/modals/ServiceFormModal.tsx';
-import DeleteServiceModal from './components/modals/DeleteServiceModal.tsx';
-import { Page, AuthPage, User, Breadcrumb, Service } from './types.ts';
+import DashboardLayout from './components/layout/DashboardLayout.tsx';
+import Loading from './components/ui/Loading.tsx';
+import { User } from './types.ts';
 import { apiClient } from './services/apiClient.ts';
 
-type ServiceManagementAction = {
-    action: 'rename' | 'delete';
-    service: Service;
-}
+// Lazy-loaded page components as per the new architecture
+const ServiceListPage = lazy(() => import('./pages/ServiceListPage.tsx'));
+const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage.tsx'));
+const ModulesPage = lazy(() => import('./pages/modules/ModulesPage.tsx'));
+const ModuleDetailPage = lazy(() => import('./pages/modules/ModuleDetailPage.tsx'));
+const EndpointsPage = lazy(() => import('./pages/endpoints/EndpointsPage.tsx'));
+const EndpointFormPage = lazy(() => import('./pages/endpoints/EndpointFormPage.tsx'));
+const EndpointDetailPage = lazy(() => import('./pages/endpoints/EndpointDetailPage.tsx'));
+const SchemasPage = lazy(() => import('./pages/schemas/SchemasPage.tsx'));
+const SchemaCreatePage = lazy(() => import('./pages/schemas/SchemaCreatePage.tsx'));
+const SchemaDetailPage = lazy(() => import('./pages/schemas/SchemaDetailPage.tsx'));
+const UserManagementPage = lazy(() => import('./pages/user-management/UserManagementPage.tsx'));
+const ApiPlayground = lazy(() => import('./pages/dashboard/ApiPlayground.tsx'));
+const AuthenticationInfo = lazy(() => import('./pages/dashboard/AuthenticationInfo.tsx'));
+const Flows = lazy(() => import('./pages/dashboard/Flows.tsx'));
+const ErrorCodes = lazy(() => import('./pages/dashboard/ErrorCodes.tsx'));
+const Changelog = lazy(() => import('./pages/dashboard/Changelog.tsx'));
+const Settings = lazy(() => import('./pages/dashboard/Settings.tsx'));
+
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [authPage, setAuthPage] = useState<AuthPage>('login');
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-  
-  const [page, setPage] = useState<Page>('Overview');
-  const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([{ name: 'Home', page: 'Overview' }]);
-  
-  const [selectedEndpointId, setSelectedEndpointId] = useState<string | null>(null);
-  const [selectedModule, setSelectedModule] = useState<string | null>(null);
-  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
-  const [selectedModelName, setSelectedModelName] = useState<string | null>(null);
-  
-  const [serviceToManage, setServiceToManage] = useState<ServiceManagementAction | null>(null);
+  const [authPage, setAuthPage] = useState< 'login' | 'register'>('login');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Theme initialization
@@ -55,133 +43,19 @@ const App: React.FC = () => {
     // Check for persisted user session
     const storedUser = localStorage.getItem('user');
     const storedToken = localStorage.getItem('accessToken');
-    const storedService = localStorage.getItem('selectedService');
 
     if (storedUser && storedToken) {
       try {
         setCurrentUser(JSON.parse(storedUser));
-        if (storedService) {
-            setSelectedService(JSON.parse(storedService));
-        }
       } catch (error) {
         console.error("Failed to parse session from localStorage", error);
         handleLogout();
       }
     }
-
+    setIsLoading(false);
   }, []);
 
-  const handleSelectService = (service: Service) => {
-    setSelectedService(service);
-    localStorage.setItem('selectedService', JSON.stringify(service));
-    handleNavigate('Overview');
-  };
-  
-  const handleSwitchService = () => {
-    setSelectedService(null);
-    localStorage.removeItem('selectedService');
-    handleNavigate('Overview');
-  };
-  
-  const handleRenameService = async (serviceData: { name: string, description: string }) => {
-    if (!serviceToManage) return;
-    try {
-        const updatedService = await apiClient<Service>(`/services/${serviceToManage.service.id}`, { method: 'PUT', body: serviceData });
-        setSelectedService(updatedService);
-        localStorage.setItem('selectedService', JSON.stringify(updatedService));
-        setServiceToManage(null);
-        alert("Service renamed successfully.");
-    } catch(err: any) {
-        alert(`Failed to rename service: ${err.message}`);
-    }
-  }
-
-  const handleDeleteService = async () => {
-    if (!serviceToManage) return;
-    try {
-        await apiClient(`/services/${serviceToManage.service.id}`, { method: 'DELETE' });
-        setServiceToManage(null);
-        handleSwitchService(); // Go back to selector
-        alert("Service deleted successfully.");
-    } catch(err: any) {
-        alert(`Failed to delete service: ${err.message}`);
-    }
-  }
-
-  const handleNavigate = useCallback((newPage: Page, newBreadcrumbs?: Breadcrumb[]) => {
-    setPage(newPage);
-    if (!['Endpoint Details', 'Endpoints', 'Endpoint Form', 'SchemaDetails', 'Schemas'].includes(newPage)) {
-        setSelectedEndpointId(null);
-        setSelectedModule(null);
-        setSelectedModelId(null);
-        setSelectedModelName(null);
-    }
-
-    if (newBreadcrumbs) {
-      setBreadcrumbs(newBreadcrumbs);
-    } else {
-      // Default breadcrumb handling
-      if (newPage === 'Overview') {
-        setBreadcrumbs([{ name: 'Home', page: 'Overview' }]);
-      } else if (newPage === 'Schemas') {
-        setBreadcrumbs([{ name: 'Home', page: 'Overview' }, { name: 'Schemas', page: 'Schemas' }]);
-      }
-      else {
-        setBreadcrumbs([{ name: 'Home', page: 'Overview' }, { name: newPage, page: newPage }]);
-      }
-    }
-  }, []);
-
-  const handleSelectEndpoint = (endpointId: string, endpointPath: string) => {
-    setSelectedEndpointId(endpointId);
-    
-    const newBreadcrumbs = [
-        { name: 'Home', page: 'Overview' as Page },
-        { name: 'Endpoints', page: 'Endpoints' as Page },
-        { name: endpointPath, page: 'Endpoint Details' as Page }
-    ];
-    handleNavigate('Endpoint Details', newBreadcrumbs);
-  };
-  
-  const handleSelectModule = (moduleName: string) => {
-    setSelectedModule(moduleName);
-    setPage('Endpoints');
-    setBreadcrumbs([
-      { name: 'Home', page: 'Overview' },
-      { name: 'Modules', page: 'Modules' },
-      { name: moduleName, page: 'Endpoints' }
-    ]);
-  };
-  
-  const handleSelectModel = (modelId: string, modelName: string) => {
-    setSelectedModelId(modelId);
-    setSelectedModelName(modelName);
-    handleNavigate('SchemaDetails', [
-      { name: 'Home', page: 'Overview' },
-      { name: 'Schemas', page: 'Schemas' },
-      { name: modelName, page: 'SchemaDetails' }
-    ]);
-  };
-
-  const handleCreateEndpoint = () => {
-    setSelectedEndpointId(null);
-    handleNavigate('Endpoint Form', [
-        { name: 'Home', page: 'Overview' },
-        { name: 'Endpoints', page: 'Endpoints' },
-        { name: 'Create', page: 'Endpoint Form' }
-    ]);
-  };
-
-  const handleEditEndpoint = (endpointId: string) => {
-    setSelectedEndpointId(endpointId);
-    handleNavigate('Endpoint Form', [
-        { name: 'Home', page: 'Overview' },
-        { name: 'Endpoints', page: 'Endpoints' },
-        { name: 'Edit', page: 'Endpoint Form' }
-    ]);
-  };
-
-  const handleLogin = async (email: string, password: string):Promise<void> => {
+  const handleLogin = async (email: string, password: string): Promise<void> => {
     const response = await apiClient<{ success: true, accessToken: string, user: User }>('/auth/signin', {
         method: 'POST',
         body: { email, password },
@@ -200,116 +74,54 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    // Optimistically clear client state
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
-    localStorage.removeItem('selectedService');
+    localStorage.removeItem('selectedService'); // Also clear service on logout
     setCurrentUser(null);
-    setSelectedService(null);
-    setPage('Overview');
-    setBreadcrumbs([{ name: 'Home', page: 'Overview' }]);
-    // Inform backend (optional, for session invalidation if using refresh tokens)
     apiClient('/auth/logout', { method: 'POST' }).catch(err => console.error("Logout failed on server:", err));
-  }
-  
-  const renderContent = () => {
-    if (!currentUser || !selectedService) return null;
-
-    const pageProps = { user: currentUser, serviceId: selectedService.id };
-
-    if (page === 'Endpoint Form') {
-      return <EndpointCreateEdit
-        endpointId={selectedEndpointId}
-        onNavigate={handleNavigate}
-        user={currentUser}
-        // FIX: Pass serviceId to the component.
-        serviceId={selectedService.id}
-      />;
-    }
-
-    if (page === 'Endpoint Details' && selectedEndpointId) {
-        return <EndpointDetail 
-            endpointId={selectedEndpointId} 
-            onNavigateToPlayground={() => handleNavigate('API Playground')} 
-            onEditEndpoint={handleEditEndpoint}
-            user={currentUser}
-        />;
-    }
-    
-    if (page === 'SchemaDetails' && selectedModelId && selectedModelName) {
-        return <Schemas
-            modelId={selectedModelId}
-            modelName={selectedModelName}
-            user={currentUser}
-        />
-    }
-
-    const pages = {
-        'Overview': <Overview {...pageProps} />,
-        'Modules': <Modules {...pageProps} onSelectModule={handleSelectModule} />,
-        'Endpoints': <EndpointsList {...pageProps} onSelectEndpoint={handleSelectEndpoint} selectedModule={selectedModule} onCreateEndpoint={handleCreateEndpoint} onEditEndpoint={handleEditEndpoint} />,
-        'API Playground': <ApiPlayground {...pageProps} selectedEndpointId={selectedEndpointId} />,
-        'Schemas': <Models {...pageProps} onSelectModel={handleSelectModel} />,
-        'Authentication': <AuthenticationInfo {...pageProps} />,
-        'Flows': <Flows {...pageProps} />,
-        'Error Codes': <ErrorCodes {...pageProps} />,
-        'Changelog': <Changelog {...pageProps} />,
-        'Settings': <Settings {...pageProps} />,
-        'User Management': currentUser.role === 'backend' ? <UserManagement {...pageProps} /> : <Overview {...pageProps} />,
-    };
-
-    return pages[page] || <Overview {...pageProps} />;
   };
 
+  if (isLoading) {
+    return <Loading />;
+  }
+  
   if (!currentUser) {
-    return authPage === 'login' ? (
-      <LoginPage 
-        onLogin={handleLogin}
-        onSwitchToRegister={() => setAuthPage('register')} 
-      />
-    ) : (
-      <RegisterPage 
-        onRegister={handleRegister} 
-        onSwitchToLogin={() => setAuthPage('login')} 
-      />
+    return (
+        <Routes>
+            <Route path="/login" element={<LoginPage onLogin={handleLogin} onSwitchToRegister={() => setAuthPage('register')} />} />
+            <Route path="/register" element={<RegisterPage onRegister={handleRegister} onSwitchToLogin={() => setAuthPage('login')} />} />
+            <Route path="*" element={<Navigate to={authPage === 'login' ? '/login' : '/register'} />} />
+        </Routes>
     );
   }
 
-  if (!selectedService) {
-    return <ServiceListPage onSelectService={handleSelectService} user={currentUser} />;
-  }
-
   return (
-    <>
-      <DashboardLayout 
-        user={currentUser}
-        onLogout={handleLogout}
-        breadcrumbs={breadcrumbs}
-        onNavigate={handleNavigate}
-        service={selectedService}
-        onSwitchService={handleSwitchService}
-        onManageService={setServiceToManage}
-      >
-        {renderContent()}
-      </DashboardLayout>
-
-      {serviceToManage?.action === 'rename' && (
-        <ServiceFormModal
-            isOpen={true}
-            onClose={() => setServiceToManage(null)}
-            onSave={handleRenameService}
-            service={serviceToManage.service}
-        />
-      )}
-       {serviceToManage?.action === 'delete' && (
-        <DeleteServiceModal
-            isOpen={true}
-            onClose={() => setServiceToManage(null)}
-            onConfirm={handleDeleteService}
-            service={serviceToManage.service}
-        />
-      )}
-    </>
+    <Suspense fallback={<Loading />}>
+      <Routes>
+        <Route path="/:serviceId/*" element={<DashboardLayout user={currentUser} onLogout={handleLogout} />}>
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="modules" element={<ModulesPage />} />
+            <Route path="modules/:moduleId" element={<ModuleDetailPage />} />
+            <Route path="endpoints" element={<EndpointsPage />} />
+            <Route path="endpoints/create" element={<EndpointFormPage />} />
+            <Route path="endpoints/:endpointId" element={<EndpointDetailPage />} />
+            <Route path="endpoints/:endpointId/edit" element={<EndpointFormPage />} />
+            <Route path="schemas" element={<SchemasPage />} />
+            <Route path="schemas/create" element={<SchemaCreatePage />} />
+            <Route path="schemas/:schemaId" element={<SchemaDetailPage />} />
+            <Route path="user-management" element={<UserManagementPage />} />
+            <Route path="api-playground" element={<ApiPlayground />} />
+            <Route path="api-playground/:endpointId" element={<ApiPlayground />} />
+            <Route path="authentication" element={<AuthenticationInfo />} />
+            <Route path="flows" element={<Flows />} />
+            <Route path="error-codes" element={<ErrorCodes />} />
+            <Route path="changelog" element={<Changelog />} />
+            <Route path="settings" element={<Settings />} />
+        </Route>
+        <Route path="/" element={<ServiceListPage user={currentUser} />} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </Suspense>
   );
 };
 

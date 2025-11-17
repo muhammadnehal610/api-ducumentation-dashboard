@@ -1,3 +1,5 @@
+
+
 import { Request, Response, NextFunction } from 'express';
 import Module from '../models/Module';
 import Endpoint from '../models/Endpoint';
@@ -5,7 +7,7 @@ import Endpoint from '../models/Endpoint';
 // @desc    Get all modules for a specific service
 // @route   GET /api/modules?serviceId=:serviceId
 // @access  Public
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const getModules = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { serviceId } = req.query;
@@ -22,7 +24,7 @@ export const getModules = async (req: Request, res: Response, next: NextFunction
 // @desc    Create a module
 // @route   POST /api/modules
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const createModule = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name, serviceId } = req.body;
@@ -41,7 +43,7 @@ export const createModule = async (req: Request, res: Response, next: NextFuncti
 // @desc    Update a module
 // @route   PUT /api/modules/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const updateModule = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const module = await Module.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
@@ -58,7 +60,7 @@ export const updateModule = async (req: Request, res: Response, next: NextFuncti
 // @desc    Delete a module and its related endpoints
 // @route   DELETE /api/modules/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const deleteModule = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const module = await Module.findById(req.params.id);

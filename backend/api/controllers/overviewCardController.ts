@@ -1,10 +1,12 @@
+
+
 import { Request, Response, NextFunction } from 'express';
 import OverviewCard from '../models/OverviewCard';
 
 // @desc    Get all overview cards for a service
 // @route   GET /api/overview-cards?serviceId=:serviceId
 // @access  Public
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const getOverviewCards = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { serviceId } = req.query;
@@ -21,7 +23,7 @@ export const getOverviewCards = async (req: Request, res: Response, next: NextFu
 // @desc    Create an overview card
 // @route   POST /api/overview-cards
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const createOverviewCard = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.body.serviceId) {
@@ -37,7 +39,7 @@ export const createOverviewCard = async (req: Request, res: Response, next: Next
 // @desc    Update an overview card
 // @route   PUT /api/overview-cards/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const updateOverviewCard = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const card = await OverviewCard.findByIdAndUpdate(req.params.id, req.body, {
@@ -56,7 +58,7 @@ export const updateOverviewCard = async (req: Request, res: Response, next: Next
 // @desc    Delete an overview card
 // @route   DELETE /api/overview-cards/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const deleteOverviewCard = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const card = await OverviewCard.findByIdAndDelete(req.params.id);

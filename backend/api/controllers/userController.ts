@@ -1,10 +1,12 @@
+
+
 // Fix: Use direct Express Request and Response types to avoid conflicts.
 // FIX: Replaced RequestHandler with explicit types to resolve overload errors.
 import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
 
 // Create User (by Admin)
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const createUser = async (req: Request, res: Response, next: NextFunction) => {
     const { name, email, password, role, status } = req.body;
      try {
@@ -34,7 +36,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 };
 
 // Read Users with Search and Pagination
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const page = parseInt(req.query.page as string) || 1;
@@ -80,7 +82,7 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
 };
 
 // Update User
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     // Don't allow password to be updated through this route
@@ -102,7 +104,7 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
 };
 
 // Delete User
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
      const { id } = req.params;
     try {

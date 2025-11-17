@@ -1,4 +1,5 @@
 
+
 export type UserRole = 'frontend' | 'backend';
 
 export interface User {
@@ -15,7 +16,8 @@ export type AuthPage = 'login' | 'register';
 
 export interface Breadcrumb {
     name: string;
-    page: Page;
+    // FIX: Changed type to string to support URL paths
+    page: string;
     params?: Record<string, any>;
 }
 

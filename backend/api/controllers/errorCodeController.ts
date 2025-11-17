@@ -1,10 +1,12 @@
+
+
 import { Request, Response, NextFunction } from 'express';
 import ErrorCode from '../models/ErrorCode';
 
 // @desc    Get all error codes for a service
 // @route   GET /api/error-codes?serviceId=:serviceId
 // @access  Public
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const getErrorCodes = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { serviceId } = req.query;
@@ -21,7 +23,7 @@ export const getErrorCodes = async (req: Request, res: Response, next: NextFunct
 // @desc    Create an error code
 // @route   POST /api/error-codes
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const createErrorCode = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.body.serviceId) {
@@ -37,7 +39,7 @@ export const createErrorCode = async (req: Request, res: Response, next: NextFun
 // @desc    Update an error code
 // @route   PUT /api/error-codes/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const updateErrorCode = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const errorCode = await ErrorCode.findByIdAndUpdate(req.params.id, req.body, {
@@ -56,7 +58,7 @@ export const updateErrorCode = async (req: Request, res: Response, next: NextFun
 // @desc    Delete an error code
 // @route   DELETE /api/error-codes/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const deleteErrorCode = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const errorCode = await ErrorCode.findByIdAndDelete(req.params.id);

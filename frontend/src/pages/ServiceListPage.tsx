@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Book, Plus, Server, Search, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiClient } from '../services/apiClient.ts';
 import { User, Service } from '../types.ts';
@@ -7,18 +7,18 @@ import ServiceFormModal from '../components/modals/ServiceFormModal.tsx';
 import DeleteServiceModal from '../components/modals/DeleteServiceModal.tsx';
 
 interface ServiceListPageProps {
-  onSelectService: (service: Service) => void;
   user: User;
 }
 
 const ITEMS_PER_PAGE = 8;
 
-const ServiceListPage: React.FC<ServiceListPageProps> = ({ onSelectService, user }) => {
+const ServiceListPage: React.FC<ServiceListPageProps> = ({ user }) => {
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
   
   const [serviceToManage, setServiceToManage] = useState<{ action: 'rename' | 'delete', service: Service } | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -44,6 +44,10 @@ const ServiceListPage: React.FC<ServiceListPageProps> = ({ onSelectService, user
     fetchServices();
   }, [fetchServices]);
   
+  const handleSelectService = (service: Service) => {
+    navigate(`/${service.id}/dashboard`);
+  };
+
   const handleSaveService = async (serviceData: { name: string, description: string }) => {
     try {
         if (serviceToManage?.action === 'rename') {
@@ -133,7 +137,7 @@ const ServiceListPage: React.FC<ServiceListPageProps> = ({ onSelectService, user
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => onSelectService(service)} className="px-4 py-1.5 text-sm font-semibold bg-primary-500 hover:bg-primary-600 text-white rounded-md">Open</button>
+                    <button onClick={() => handleSelectService(service)} className="px-4 py-1.5 text-sm font-semibold bg-primary-500 hover:bg-primary-600 text-white rounded-md">Open</button>
                     {user.role === 'backend' && (
                       <div className="relative">
                           <button onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === service.id ? null : service.id); }} className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"><MoreVertical size={18} /></button>

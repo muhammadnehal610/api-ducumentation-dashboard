@@ -1,10 +1,12 @@
+
+
 import { Request, Response, NextFunction } from 'express';
 import Changelog from '../models/Changelog';
 
 // @desc    Get all changelog items
 // @route   GET /api/changelog
 // @access  Public
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const getChangelogs = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const changelogs = await Changelog.find({}).sort({ date: -1 });
@@ -17,7 +19,7 @@ export const getChangelogs = async (req: Request, res: Response, next: NextFunct
 // @desc    Create a changelog item
 // @route   POST /api/changelog
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const createChangelog = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const changelog = await Changelog.create(req.body);
@@ -30,7 +32,7 @@ export const createChangelog = async (req: Request, res: Response, next: NextFun
 // @desc    Update a changelog item
 // @route   PUT /api/changelog/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const updateChangelog = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const changelog = await Changelog.findByIdAndUpdate(req.params.id, req.body, {
@@ -49,7 +51,7 @@ export const updateChangelog = async (req: Request, res: Response, next: NextFun
 // @desc    Delete a changelog item
 // @route   DELETE /api/changelog/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const deleteChangelog = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const changelog = await Changelog.findByIdAndDelete(req.params.id);

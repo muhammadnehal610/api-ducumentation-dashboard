@@ -1,10 +1,12 @@
+
+
 import { Request, Response, NextFunction } from 'express';
 import ModelSchema from '../models/ModelSchema';
 
 // @desc    Get all schemas for a service
 // @route   GET /api/schemas?serviceId=:serviceId
 // @access  Public
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const getSchemas = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { serviceId } = req.query;
@@ -21,7 +23,7 @@ export const getSchemas = async (req: Request, res: Response, next: NextFunction
 // @desc    Get single schema by ID
 // @route   GET /api/schemas/:id
 // @access  Public
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const getSchema = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = await ModelSchema.findById(req.params.id);
@@ -37,7 +39,7 @@ export const getSchema = async (req: Request, res: Response, next: NextFunction)
 // @desc    Create a schema
 // @route   POST /api/schemas
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const createSchema = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.body.serviceId) {
@@ -53,7 +55,7 @@ export const createSchema = async (req: Request, res: Response, next: NextFuncti
 // @desc    Update a schema
 // @route   PUT /api/schemas/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const updateSchema = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Exclude fields from this top-level update to prevent accidental overwrite
@@ -76,7 +78,7 @@ export const updateSchema = async (req: Request, res: Response, next: NextFuncti
 // @desc    Delete a schema
 // @route   DELETE /api/schemas/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const deleteSchema = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = await ModelSchema.findByIdAndDelete(req.params.id);
@@ -95,7 +97,7 @@ export const deleteSchema = async (req: Request, res: Response, next: NextFuncti
 // @desc    Add a field to a schema
 // @route   POST /api/schemas/:schemaId/fields
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const addSchemaField = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = await ModelSchema.findById(req.params.schemaId);
@@ -113,7 +115,7 @@ export const addSchemaField = async (req: Request, res: Response, next: NextFunc
 // @desc    Update a field in a schema
 // @route   PUT /api/schemas/:schemaId/fields/:fieldId
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const updateSchemaField = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = await ModelSchema.findById(req.params.schemaId);
@@ -138,7 +140,7 @@ export const updateSchemaField = async (req: Request, res: Response, next: NextF
 // @desc    Delete a field from a schema
 // @route   DELETE /api/schemas/:schemaId/fields/:fieldId
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const deleteSchemaField = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = await ModelSchema.findById(req.params.schemaId);

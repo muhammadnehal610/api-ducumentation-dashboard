@@ -1,3 +1,5 @@
+
+
 import { Request, Response, NextFunction } from 'express';
 import Service from '../models/Service';
 import Module from '../models/Module';
@@ -10,7 +12,7 @@ import OverviewCard from '../models/OverviewCard';
 // @desc    Get all services
 // @route   GET /api/services
 // @access  Public
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const getServices = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const services = await Service.find({}).sort({ name: 1 });
@@ -23,7 +25,7 @@ export const getServices = async (req: Request, res: Response, next: NextFunctio
 // @desc    Create a service
 // @route   POST /api/services
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const createService = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name } = req.body;
@@ -41,7 +43,7 @@ export const createService = async (req: Request, res: Response, next: NextFunct
 // @desc    Update a service
 // @route   PUT /api/services/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const updateService = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name } = req.body;
@@ -67,7 +69,7 @@ export const updateService = async (req: Request, res: Response, next: NextFunct
 // @desc    Delete a service and all related data
 // @route   DELETE /api/services/:id
 // @access  Private/Admin
-// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+// FIX: Switched to using explicit types for proper type inference.
 export const deleteService = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const serviceId = req.params.id;

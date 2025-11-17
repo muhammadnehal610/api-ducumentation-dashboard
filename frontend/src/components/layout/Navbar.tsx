@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Settings, User, LogOut, Menu, MoreVertical, Edit, Trash2, Repeat, ChevronDown } from 'lucide-react';
-// FIX: Changed alias import to relative path with extension for module resolution.
+import { useNavigate } from 'react-router-dom';
+import { Bell, Settings, User, LogOut, Menu, Edit, Trash2, Repeat, ChevronDown } from 'lucide-react';
 import { User as UserType, Service } from '../../types.ts';
 
 interface NavbarProps {
@@ -9,13 +8,13 @@ interface NavbarProps {
   toggleSidebar: () => void;
   user: UserType;
   service: Service;
-  onSwitchService: () => void;
   onManageService: (action: { action: 'rename' | 'delete', service: Service }) => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onLogout, toggleSidebar, user, service, onSwitchService, onManageService }) => {
+const Navbar: React.FC<NavbarProps> = ({ onLogout, toggleSidebar, user, service, onManageService }) => {
   const [isServiceMenuOpen, setServiceMenuOpen] = useState(false);
   const serviceMenuRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -26,6 +25,11 @@ const Navbar: React.FC<NavbarProps> = ({ onLogout, toggleSidebar, user, service,
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+  
+  const handleSwitchService = () => {
+    localStorage.removeItem('selectedService');
+    navigate('/');
+  };
 
   return (
     <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-4 sticky top-0 z-30">
@@ -42,7 +46,7 @@ const Navbar: React.FC<NavbarProps> = ({ onLogout, toggleSidebar, user, service,
             </button>
             {isServiceMenuOpen && (
               <div className="absolute top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-200 dark:border-gray-700">
-                 <button onClick={onSwitchService} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                 <button onClick={handleSwitchService} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
                   <Repeat size={14} className="mr-2" /> Switch Service
                 </button>
                 {user.role === 'backend' && (
