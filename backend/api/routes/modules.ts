@@ -1,5 +1,5 @@
 
-import { Router } from 'express';
+import express from 'express';
 import {
     getModules,
     createModule,
@@ -8,7 +8,7 @@ import {
 } from '../controllers/moduleController';
 import { protect, authorize } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
 router.route('/')
     .get(getModules)

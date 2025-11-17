@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Sidebar from './Sidebar.tsx';
 import Navbar from './Navbar.tsx';
 import Breadcrumbs from '../ui/Breadcrumbs.tsx';
@@ -16,22 +16,47 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user, onLogout, breadcrumbs, onNavigate }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [services, setServices] = useState<string[]>(['All Services']);
-  const [selectedService, setSelectedService] = useState(services[0]);
+  const [services, setServices] = useState<{ id: string; name: string }[]>([]);
+  const [selectedService, setSelectedService] = useState('All Services');
+
+  const fetchServices = useCallback(async () => {
+    try {
+        const response = await apiClient<{ data: { id: string; name: string }[] }>('/modules');
+        setServices(response.data);
+    } catch (error) {
+        console.error("Failed to fetch services:", error);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchServices = async () => {
-        try {
-            // Fetch all services for the dropdown
-            const response = await apiClient<{ data: { name: string }[] }>('/modules');
-            const serviceNames = ['All Services', ...response.data.map(s => s.name)];
-            setServices(serviceNames);
-        } catch (error) {
-            console.error("Failed to fetch services:", error);
-        }
-    };
     fetchServices();
-  }, []);
+    
+    const handleServicesUpdate = () => {
+        fetchServices();
+    };
+
+    window.addEventListener('servicesUpdated', handleServicesUpdate);
+
+    return () => {
+        window.removeEventListener('servicesUpdated', handleServicesUpdate);
+    };
+  }, [fetchServices]);
+  
+  const handleServiceSelect = (serviceName: string) => {
+    setSelectedService(serviceName);
+    if (serviceName === 'All Services') {
+        onNavigate('Endpoints');
+    } else if (serviceName === '__CREATE_NEW__') {
+        onNavigate('Service Management');
+    }
+    else {
+        onNavigate('Endpoints', [
+            { name: 'Home', page: 'Overview' },
+            { name: 'Service Management', page: 'Service Management'},
+            { name: serviceName, page: 'Endpoints' },
+        ]);
+    }
+  }
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-950">
@@ -42,7 +67,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user, onLog
         setIsOpen={setSidebarOpen} 
         services={services}
         selectedService={selectedService}
-        setSelectedService={setSelectedService}
+        setSelectedService={handleServiceSelect}
       />
       <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
         <Navbar onLogout={onLogout} toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} user={user}/>

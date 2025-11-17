@@ -58,8 +58,8 @@ const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreat
       const matchesSearch = endpoint.path.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             endpoint.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesFilter = activeFilters.size === 0 || activeFilters.has(endpoint.method);
-      const matchesModule = !selectedService || selectedService === 'All Services' || endpoint.module === selectedService;
-      return matchesSearch && matchesFilter && matchesModule;
+      const matchesService = !selectedService || selectedService === 'All Services' || endpoint.module === selectedService;
+      return matchesSearch && matchesFilter && matchesService;
     });
   }, [endpoints, searchTerm, activeFilters, selectedService]);
   
@@ -146,7 +146,7 @@ const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreat
                 <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Endpoint</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Module</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Service</th>
                 <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Auth</th>
                 {user.role === 'backend' && <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>}
                 </tr>

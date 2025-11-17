@@ -3,9 +3,8 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// FIX: Split express import to resolve type conflicts.
+// FIX: Use a single default import for express to resolve type conflicts.
 import express from 'express';
-import { Request, Response, ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
@@ -28,8 +27,7 @@ app.use(express.json());
 
 // API Routes
 // FIX: Use explicit types from the express default import.
-// FIX: Used imported Request and Response types.
-app.get('/api', (req: Request, res: Response) => {
+app.get('/api', (req: express.Request, res: express.Response) => {
   res.send('API is running...');
 });
 
@@ -45,8 +43,7 @@ app.use('/api/overview-cards', overviewCardRoutes);
 
 // Simple Error Handler
 // FIX: Use explicit types from the express default import.
-// FIX: Used imported ErrorRequestHandler type.
-const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+const errorHandler: express.ErrorRequestHandler = (err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ success: false, message: err.message || 'Something went wrong!' });
 };

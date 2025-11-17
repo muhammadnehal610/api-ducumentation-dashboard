@@ -19,6 +19,12 @@ export const getModules: RequestHandler = async (req, res, next) => {
             query.name = { $regex: search, $options: 'i' };
         }
 
+        // For dropdowns, if no limit is specified, return all
+        if (!req.query.limit) {
+            const allModules = await Module.find({}).sort({ name: 1 });
+            return res.status(200).json({ success: true, count: allModules.length, data: allModules });
+        }
+        
         const modules = await Module.find(query)
             .sort({ createdAt: -1 })
             .skip(skip)
@@ -27,12 +33,6 @@ export const getModules: RequestHandler = async (req, res, next) => {
         const total = await Module.countDocuments(query);
         const totalPages = Math.ceil(total / limit);
         
-        // For dropdowns, if no limit is specified, return all
-        if (!req.query.limit) {
-            const allModules = await Module.find({}).sort({ name: 1 });
-            return res.status(200).json({ success: true, count: allModules.length, data: allModules });
-        }
-
         res.status(200).json({
             success: true,
             data: {
@@ -53,6 +53,11 @@ export const getModules: RequestHandler = async (req, res, next) => {
 // @access  Private/Admin
 export const createModule: RequestHandler = async (req, res, next) => {
     try {
+        const { name } = req.body;
+        const existingModule = await Module.findOne({ name });
+        if (existingModule) {
+            return res.status(409).json({ success: false, message: 'A service with this name already exists.' });
+        }
         const module = await Module.create(req.body);
         res.status(201).json({ success: true, data: module });
     } catch (error) {
@@ -70,19 +75,24 @@ export const updateModule: RequestHandler = async (req, res, next) => {
         const module = await Module.findById(req.params.id);
 
         if (!module) {
-            return res.status(404).json({ success: false, message: 'Module not found.' });
+            return res.status(404).json({ success: false, message: 'Service not found.' });
         }
 
         const oldName = module.name;
         
         // If name is changing, cascade the update
         if (name && oldName !== name) {
-            await Endpoint.updateMany({ module: oldName }, { module: name });
-            await ModelSchema.updateMany({ module: oldName }, { module: name });
+            // Check for uniqueness before updating
+            const existingModule = await Module.findOne({ name });
+            if (existingModule && existingModule._id.toString() !== req.params.id) {
+                 return res.status(409).json({ success: false, message: 'A service with this name already exists.' });
+            }
+            await Endpoint.updateMany({ module: oldName }, { $set: { module: name } });
+            await ModelSchema.updateMany({ module: oldName }, { $set: { module: name } });
         }
 
         module.name = name || module.name;
-        module.description = req.body.description || module.description;
+        module.description = req.body.description; // Allow clearing description
         const updatedModule = await module.save();
 
         res.status(200).json({ success: true, data: updatedModule });
@@ -99,7 +109,7 @@ export const deleteModule: RequestHandler = async (req, res, next) => {
         const module = await Module.findById(req.params.id);
 
         if (!module) {
-            return res.status(404).json({ success: false, message: 'Module not found.' });
+            return res.status(404).json({ success: false, message: 'Service not found.' });
         }
         
         // Cascade delete
@@ -108,7 +118,7 @@ export const deleteModule: RequestHandler = async (req, res, next) => {
 
         await module.deleteOne();
 
-        res.status(200).json({ success: true, message: 'Module and all related data deleted successfully.' });
+        res.status(200).json({ success: true, message: 'Service and all related data deleted successfully.' });
     } catch (error) {
         next(error);
     }

@@ -124,6 +124,7 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
                             <tr>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Model Name</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Service</th>
                                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -132,8 +133,9 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
                                 <tr key={schema.id}>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{schema.name}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{schema.description}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{schema.module}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button onClick={() => onSelectModel(schema.id, schema.name)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mr-4 inline-flex items-center"><Eye size={16} className="mr-1"/> View Schemas</button>
+                                        <button onClick={() => onSelectModel(schema.id, schema.name)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mr-4 inline-flex items-center"><Eye size={16} className="mr-1"/> View Schema</button>
                                         {isBackend && (
                                             <>
                                                 <button onClick={() => handleOpenModal(schema)} className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 mr-4"><Edit size={16}/></button>

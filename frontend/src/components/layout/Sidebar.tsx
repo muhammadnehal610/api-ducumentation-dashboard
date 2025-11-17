@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { LayoutDashboard, Code, Book, PlayCircle, FileJson, Lock, GitMerge, AlertTriangle, GitBranch, SettingsIcon, ChevronDown, ChevronsLeft, ChevronsRight, Briefcase, Users, Server } from 'lucide-react';
+import { LayoutDashboard, Code, Book, PlayCircle, FileJson, Lock, GitMerge, AlertTriangle, GitBranch, SettingsIcon, ChevronDown, ChevronsLeft, ChevronsRight, Users, Server } from 'lucide-react';
 // FIX: Changed alias imports to relative paths with extensions for module resolution.
 import { Page, User } from '../../types.ts';
 
@@ -7,7 +7,7 @@ interface SidebarProps {
   onNavigate: (page: Page) => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  services: string[];
+  services: { id: string, name: string }[];
   selectedService: string;
   setSelectedService: (service: string) => void;
   user: User;
@@ -62,7 +62,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigate, isOpen, setIsOpen, servic
             onChange={(e) => setSelectedService(e.target.value)}
             className="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-white appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            {services.map(service => <option key={service}>{service}</option>)}
+            <option value="All Services">All Services</option>
+            {services.map(service => <option key={service.id} value={service.name}>{service.name}</option>)}
+            {user.role === 'backend' && <option value="__CREATE_NEW__" className="font-bold text-primary-400"> + Create New Service</option>}
           </select>
           <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         </div>
