@@ -1,11 +1,11 @@
-
-import * as express from 'express';
+import { Request, Response, NextFunction } from 'express';
 import Endpoint from '../models/Endpoint';
 
 // @desc    Get all endpoints for a service
 // @route   GET /api/endpoints?serviceId=:serviceId
 // @access  Public
-export const getEndpoints: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const getEndpoints = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { serviceId } = req.query;
         if (!serviceId) {
@@ -21,7 +21,8 @@ export const getEndpoints: express.RequestHandler = async (req, res, next) => {
 // @desc    Get single endpoint
 // @route   GET /api/endpoints/:id
 // @access  Public
-export const getEndpoint: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const getEndpoint = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const endpoint = await Endpoint.findById(req.params.id);
         if (!endpoint) {
@@ -36,7 +37,8 @@ export const getEndpoint: express.RequestHandler = async (req, res, next) => {
 // @desc    Create an endpoint
 // @route   POST /api/endpoints
 // @access  Private/Admin
-export const createEndpoint: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const createEndpoint = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.body.serviceId) {
             return res.status(400).json({ success: false, message: "Service ID is required to create an endpoint." });
@@ -51,7 +53,8 @@ export const createEndpoint: express.RequestHandler = async (req, res, next) => 
 // @desc    Update an endpoint
 // @route   PUT /api/endpoints/:id
 // @access  Private/Admin
-export const updateEndpoint: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const updateEndpoint = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const endpoint = await Endpoint.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
@@ -69,7 +72,8 @@ export const updateEndpoint: express.RequestHandler = async (req, res, next) => 
 // @desc    Delete an endpoint
 // @route   DELETE /api/endpoints/:id
 // @access  Private/Admin
-export const deleteEndpoint: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const deleteEndpoint = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const endpoint = await Endpoint.findByIdAndDelete(req.params.id);
         if (!endpoint) {

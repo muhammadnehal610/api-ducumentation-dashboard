@@ -1,5 +1,4 @@
-
-import * as express from 'express';
+import { Request, Response, NextFunction } from 'express';
 import Service from '../models/Service';
 import Module from '../models/Module';
 import Endpoint from '../models/Endpoint';
@@ -11,7 +10,8 @@ import OverviewCard from '../models/OverviewCard';
 // @desc    Get all services
 // @route   GET /api/services
 // @access  Public
-export const getServices: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const getServices = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const services = await Service.find({}).sort({ name: 1 });
         res.status(200).json({ success: true, count: services.length, data: services });
@@ -23,7 +23,8 @@ export const getServices: express.RequestHandler = async (req, res, next) => {
 // @desc    Create a service
 // @route   POST /api/services
 // @access  Private/Admin
-export const createService: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const createService = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name } = req.body;
         const existingService = await Service.findOne({ name });
@@ -40,7 +41,8 @@ export const createService: express.RequestHandler = async (req, res, next) => {
 // @desc    Update a service
 // @route   PUT /api/services/:id
 // @access  Private/Admin
-export const updateService: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const updateService = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name } = req.body;
         
@@ -65,7 +67,8 @@ export const updateService: express.RequestHandler = async (req, res, next) => {
 // @desc    Delete a service and all related data
 // @route   DELETE /api/services/:id
 // @access  Private/Admin
-export const deleteService: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const deleteService = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const serviceId = req.params.id;
         const service = await Service.findById(serviceId);

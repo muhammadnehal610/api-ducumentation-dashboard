@@ -1,11 +1,11 @@
-
-import * as express from 'express';
+import { Request, Response, NextFunction } from 'express';
 import ModelSchema from '../models/ModelSchema';
 
 // @desc    Get all schemas for a service
 // @route   GET /api/schemas?serviceId=:serviceId
 // @access  Public
-export const getSchemas: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const getSchemas = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { serviceId } = req.query;
         if (!serviceId) {
@@ -21,7 +21,8 @@ export const getSchemas: express.RequestHandler = async (req, res, next) => {
 // @desc    Get single schema by ID
 // @route   GET /api/schemas/:id
 // @access  Public
-export const getSchema: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const getSchema = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = await ModelSchema.findById(req.params.id);
         if (!schema) {
@@ -36,7 +37,8 @@ export const getSchema: express.RequestHandler = async (req, res, next) => {
 // @desc    Create a schema
 // @route   POST /api/schemas
 // @access  Private/Admin
-export const createSchema: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const createSchema = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.body.serviceId) {
             return res.status(400).json({ success: false, message: "Service ID is required to create a schema." });
@@ -51,7 +53,8 @@ export const createSchema: express.RequestHandler = async (req, res, next) => {
 // @desc    Update a schema
 // @route   PUT /api/schemas/:id
 // @access  Private/Admin
-export const updateSchema: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const updateSchema = async (req: Request, res: Response, next: NextFunction) => {
     try {
         // Exclude fields from this top-level update to prevent accidental overwrite
         const { fields, ...updateData } = req.body;
@@ -73,7 +76,8 @@ export const updateSchema: express.RequestHandler = async (req, res, next) => {
 // @desc    Delete a schema
 // @route   DELETE /api/schemas/:id
 // @access  Private/Admin
-export const deleteSchema: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const deleteSchema = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = await ModelSchema.findByIdAndDelete(req.params.id);
         if (!schema) {
@@ -91,7 +95,8 @@ export const deleteSchema: express.RequestHandler = async (req, res, next) => {
 // @desc    Add a field to a schema
 // @route   POST /api/schemas/:schemaId/fields
 // @access  Private/Admin
-export const addSchemaField: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const addSchemaField = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = await ModelSchema.findById(req.params.schemaId);
         if (!schema) {
@@ -108,7 +113,8 @@ export const addSchemaField: express.RequestHandler = async (req, res, next) => 
 // @desc    Update a field in a schema
 // @route   PUT /api/schemas/:schemaId/fields/:fieldId
 // @access  Private/Admin
-export const updateSchemaField: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const updateSchemaField = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = await ModelSchema.findById(req.params.schemaId);
         if (!schema) {
@@ -132,7 +138,8 @@ export const updateSchemaField: express.RequestHandler = async (req, res, next) 
 // @desc    Delete a field from a schema
 // @route   DELETE /api/schemas/:schemaId/fields/:fieldId
 // @access  Private/Admin
-export const deleteSchemaField: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const deleteSchemaField = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = await ModelSchema.findById(req.params.schemaId);
         if (!schema) {

@@ -1,12 +1,12 @@
-
-import * as express from 'express';
+import { Request, Response, NextFunction } from 'express';
 import Module from '../models/Module';
 import Endpoint from '../models/Endpoint';
 
 // @desc    Get all modules for a specific service
 // @route   GET /api/modules?serviceId=:serviceId
 // @access  Public
-export const getModules: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const getModules = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { serviceId } = req.query;
         if (!serviceId) {
@@ -22,7 +22,8 @@ export const getModules: express.RequestHandler = async (req, res, next) => {
 // @desc    Create a module
 // @route   POST /api/modules
 // @access  Private/Admin
-export const createModule: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const createModule = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { name, serviceId } = req.body;
         // Check for uniqueness within the service
@@ -40,7 +41,8 @@ export const createModule: express.RequestHandler = async (req, res, next) => {
 // @desc    Update a module
 // @route   PUT /api/modules/:id
 // @access  Private/Admin
-export const updateModule: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const updateModule = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const module = await Module.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
 
@@ -56,7 +58,8 @@ export const updateModule: express.RequestHandler = async (req, res, next) => {
 // @desc    Delete a module and its related endpoints
 // @route   DELETE /api/modules/:id
 // @access  Private/Admin
-export const deleteModule: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const deleteModule = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const module = await Module.findById(req.params.id);
 

@@ -1,6 +1,6 @@
 
 
-import * as express from 'express';
+import { Router } from 'express';
 import {
     getServices,
     createService,
@@ -9,7 +9,7 @@ import {
 } from '../controllers/serviceController';
 import { protect, authorize } from '../middleware/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
 // Public route to get all services for the selection dropdown
 router.route('/').get(getServices);

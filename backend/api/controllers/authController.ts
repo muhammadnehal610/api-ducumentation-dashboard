@@ -1,13 +1,12 @@
-
-
 // Fix: Use direct Express Request and Response types to avoid conflicts.
-import * as express from 'express';
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
 import { generateToken, generateRefreshToken } from '../utils/tokenUtils';
 
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const signup: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const signup = async (req: Request, res: Response, next: NextFunction) => {
     const { name, email, password, role } = req.body;
 
     try {
@@ -37,8 +36,8 @@ export const signup: express.RequestHandler = async (req, res, next) => {
     }
 };
 
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const signin: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const signin = async (req: Request, res: Response, next: NextFunction) => {
     const { email, password } = req.body;
 
     try {
@@ -80,8 +79,8 @@ export const signin: express.RequestHandler = async (req, res, next) => {
     }
 };
 
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const logout: express.RequestHandler = (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const logout = (req: Request, res: Response, next: NextFunction) => {
     // In a real-world stateless JWT implementation, logout is handled client-side by deleting tokens.
     // If using a refresh token blacklist, you would invalidate the token here.
     res.status(200).json({ success: true, message: 'Logged out successfully.' });

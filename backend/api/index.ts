@@ -5,8 +5,8 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// FIX: Standardize on a namespace import for express to resolve module type conflicts.
-import * as express from 'express';
+// FIX: Use default import for express app and named imports for types.
+import express, { Request, Response, ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
@@ -30,7 +30,7 @@ app.use(express.json());
 
 // API Routes
 // FIX: Use explicit types from the express namespace import.
-app.get('/api', (req: express.Request, res: express.Response) => {
+app.get('/api', (req: Request, res: Response) => {
   res.send('API is running...');
 });
 
@@ -47,7 +47,7 @@ app.use('/api/overview-cards', overviewCardRoutes);
 
 // Simple Error Handler
 // FIX: Use explicit types from the express namespace import.
-const errorHandler: express.ErrorRequestHandler = (err, req, res, next) => {
+const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ success: false, message: err.message || 'Something went wrong!' });
 };

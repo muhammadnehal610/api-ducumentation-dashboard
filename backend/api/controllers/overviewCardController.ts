@@ -1,11 +1,11 @@
-
-import * as express from 'express';
+import { Request, Response, NextFunction } from 'express';
 import OverviewCard from '../models/OverviewCard';
 
 // @desc    Get all overview cards for a service
 // @route   GET /api/overview-cards?serviceId=:serviceId
 // @access  Public
-export const getOverviewCards: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const getOverviewCards = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { serviceId } = req.query;
         if (!serviceId) {
@@ -21,7 +21,8 @@ export const getOverviewCards: express.RequestHandler = async (req, res, next) =
 // @desc    Create an overview card
 // @route   POST /api/overview-cards
 // @access  Private/Admin
-export const createOverviewCard: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const createOverviewCard = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.body.serviceId) {
             return res.status(400).json({ success: false, message: "Service ID is required to create a card." });
@@ -36,7 +37,8 @@ export const createOverviewCard: express.RequestHandler = async (req, res, next)
 // @desc    Update an overview card
 // @route   PUT /api/overview-cards/:id
 // @access  Private/Admin
-export const updateOverviewCard: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const updateOverviewCard = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const card = await OverviewCard.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
@@ -54,7 +56,8 @@ export const updateOverviewCard: express.RequestHandler = async (req, res, next)
 // @desc    Delete an overview card
 // @route   DELETE /api/overview-cards/:id
 // @access  Private/Admin
-export const deleteOverviewCard: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const deleteOverviewCard = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const card = await OverviewCard.findByIdAndDelete(req.params.id);
         if (!card) {

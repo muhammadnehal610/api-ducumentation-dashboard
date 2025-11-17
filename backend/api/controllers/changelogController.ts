@@ -1,12 +1,11 @@
-
-import * as express from 'express';
+import { Request, Response, NextFunction } from 'express';
 import Changelog from '../models/Changelog';
 
 // @desc    Get all changelog items
 // @route   GET /api/changelog
 // @access  Public
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const getChangelogs: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const getChangelogs = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const changelogs = await Changelog.find({}).sort({ date: -1 });
         res.status(200).json({ success: true, count: changelogs.length, data: changelogs });
@@ -18,8 +17,8 @@ export const getChangelogs: express.RequestHandler = async (req, res, next) => {
 // @desc    Create a changelog item
 // @route   POST /api/changelog
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const createChangelog: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const createChangelog = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const changelog = await Changelog.create(req.body);
         res.status(201).json({ success: true, data: changelog });
@@ -31,8 +30,8 @@ export const createChangelog: express.RequestHandler = async (req, res, next) =>
 // @desc    Update a changelog item
 // @route   PUT /api/changelog/:id
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const updateChangelog: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const updateChangelog = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const changelog = await Changelog.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
@@ -50,8 +49,8 @@ export const updateChangelog: express.RequestHandler = async (req, res, next) =>
 // @desc    Delete a changelog item
 // @route   DELETE /api/changelog/:id
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const deleteChangelog: express.RequestHandler = async (req, res, next) => {
+// FIX: Replaced RequestHandler with explicit types to resolve overload errors.
+export const deleteChangelog = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const changelog = await Changelog.findByIdAndDelete(req.params.id);
         if (!changelog) {
