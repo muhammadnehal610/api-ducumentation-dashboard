@@ -18,7 +18,6 @@ import Settings from './pages/dashboard/Settings.tsx';
 import Modules from './pages/dashboard/Modules.tsx';
 import UserManagement from './pages/dashboard/UserManagement.tsx';
 import { Page, AuthPage, User, Breadcrumb } from './types.ts';
-import { endpoints } from './constants/dummyData.ts';
 import { apiClient } from './services/apiClient.ts';
 
 const App: React.FC = () => {
@@ -30,6 +29,7 @@ const App: React.FC = () => {
   
   const [selectedEndpointId, setSelectedEndpointId] = useState<string | null>(null);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const [selectedModelName, setSelectedModelName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,6 +59,7 @@ const App: React.FC = () => {
     if (!['Endpoint Details', 'Endpoints', 'Endpoint Form', 'SchemaDetails', 'Schemas'].includes(newPage)) {
         setSelectedEndpointId(null);
         setSelectedModule(null);
+        setSelectedModelId(null);
         setSelectedModelName(null);
     }
 
@@ -77,15 +78,13 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleSelectEndpoint = (endpointId: string) => {
-    const endpoint = endpoints.find(e => e.id === endpointId);
-    if (!endpoint) return;
+  const handleSelectEndpoint = (endpointId: string, endpointPath: string) => {
     setSelectedEndpointId(endpointId);
     
     const newBreadcrumbs = [
         { name: 'Home', page: 'Overview' as Page },
         { name: 'Endpoints', page: 'Endpoints' as Page },
-        { name: endpoint.path, page: 'Endpoint Details' as Page }
+        { name: endpointPath, page: 'Endpoint Details' as Page }
     ];
     handleNavigate('Endpoint Details', newBreadcrumbs);
   };
@@ -100,7 +99,8 @@ const App: React.FC = () => {
     ]);
   };
   
-  const handleSelectModel = (modelName: string) => {
+  const handleSelectModel = (modelId: string, modelName: string) => {
+    setSelectedModelId(modelId);
     setSelectedModelName(modelName);
     handleNavigate('SchemaDetails', [
       { name: 'Home', page: 'Overview' },
@@ -119,8 +119,6 @@ const App: React.FC = () => {
   };
 
   const handleEditEndpoint = (endpointId: string) => {
-    const endpoint = endpoints.find(e => e.id === endpointId);
-    if (!endpoint) return;
     setSelectedEndpointId(endpointId);
     handleNavigate('Endpoint Form', [
         { name: 'Home', page: 'Overview' },
@@ -180,8 +178,9 @@ const App: React.FC = () => {
         />;
     }
     
-    if (page === 'SchemaDetails' && selectedModelName) {
+    if (page === 'SchemaDetails' && selectedModelId && selectedModelName) {
         return <Schemas
+            modelId={selectedModelId}
             modelName={selectedModelName}
             user={currentUser}
         />

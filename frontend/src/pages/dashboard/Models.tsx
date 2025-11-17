@@ -1,24 +1,43 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 // FIX: Changed alias imports to relative paths with extensions for module resolution.
-import { schemas as initialSchemas } from '../../constants/dummyData.ts';
 import { User, Schema } from '../../types.ts';
 import { Plus, Edit, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import Modal from '../../components/ui/Modal.tsx';
+import { apiClient } from '../../services/apiClient.ts';
 
 interface ModelsProps {
     user: User;
-    onSelectModel: (modelName: string) => void;
+    onSelectModel: (modelId: string, modelName: string) => void;
 }
 
 const ITEMS_PER_PAGE = 10;
 
 const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
-    const [schemas, setSchemas] = useState(initialSchemas);
+    const [schemas, setSchemas] = useState<Schema[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSchema, setEditingSchema] = useState<Schema | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
 
     const isBackend = user.role === 'backend';
+
+    const fetchSchemas = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await apiClient<{ data: Schema[] }>('/schemas');
+            setSchemas(response.data);
+        } catch (err: any) {
+            setError(err.message || 'Failed to fetch schemas.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchSchemas();
+    }, [fetchSchemas]);
 
     const totalPages = Math.ceil(schemas.length / ITEMS_PER_PAGE);
     const paginatedSchemas = useMemo(() => {
@@ -36,18 +55,28 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
         setEditingSchema(null);
     };
 
-    const handleSave = (schemaData: { name: string, description: string }) => {
-        if (editingSchema) {
-            setSchemas(schemas.map(s => s.name === editingSchema.name ? { ...s, ...schemaData } : s));
-        } else {
-            setSchemas([...schemas, { ...schemaData, fields: [] }]);
+    const handleSave = async (schemaData: { name: string, description?: string }) => {
+        try {
+            if (editingSchema) {
+                await apiClient(`/schemas/${editingSchema.id}`, { method: 'PUT', body: schemaData });
+            } else {
+                await apiClient('/schemas', { method: 'POST', body: { ...schemaData, fields: [] } });
+            }
+            fetchSchemas();
+            handleCloseModal();
+        } catch(err: any) {
+            alert(`Failed to save model: ${err.message}`);
         }
-        handleCloseModal();
     };
 
-    const handleDelete = (schemaName: string) => {
+    const handleDelete = async (schemaId: string, schemaName: string) => {
         if (window.confirm(`Are you sure you want to delete the model "${schemaName}"? This will delete all its fields.`)) {
-            setSchemas(schemas.filter(s => s.name !== schemaName));
+            try {
+                await apiClient(`/schemas/${schemaId}`, { method: 'DELETE' });
+                fetchSchemas();
+            } catch(err: any) {
+                alert(`Failed to delete model: ${err.message}`);
+            }
         }
     };
 
@@ -61,7 +90,7 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
             <div className="flex items-center">
                 <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"><ChevronLeft size={16}/></button>
                 <span className="px-2">Page {currentPage} of {totalPages}</span>
-                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"><ChevronRight size={16}/></button>
+                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"><ChevronRight size={16}/></button>
             </div>
         </div>
     );
@@ -85,34 +114,39 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
                 )}
             </div>
 
+            {error && <p className="text-center text-red-500 mb-4">{error}</p>}
             <div className="overflow-x-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                    <thead className="bg-gray-50 dark:bg-gray-800">
-                        <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Model Name</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
-                        {paginatedSchemas.map(schema => (
-                            <tr key={schema.name}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{schema.name}</td>
-                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{schema.description}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onClick={() => onSelectModel(schema.name)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mr-4 inline-flex items-center"><Eye size={16} className="mr-1"/> View Schemas</button>
-                                    {isBackend && (
-                                        <>
-                                            <button onClick={() => handleOpenModal(schema)} className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 mr-4"><Edit size={16}/></button>
-                                            <button onClick={() => handleDelete(schema.name)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"><Trash2 size={16}/></button>
-                                        </>
-                                    )}
-                                </td>
+                {isLoading ? (
+                    <div className="text-center p-8">Loading models...</div>
+                ) : (
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                        <thead className="bg-gray-50 dark:bg-gray-800">
+                            <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Model Name</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {paginatedSchemas.length > 0 && <Pagination />}
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
+                            {paginatedSchemas.map(schema => (
+                                <tr key={schema.id}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{schema.name}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{schema.description}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button onClick={() => onSelectModel(schema.id, schema.name)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mr-4 inline-flex items-center"><Eye size={16} className="mr-1"/> View Schemas</button>
+                                        {isBackend && (
+                                            <>
+                                                <button onClick={() => handleOpenModal(schema)} className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 mr-4"><Edit size={16}/></button>
+                                                <button onClick={() => handleDelete(schema.id, schema.name)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"><Trash2 size={16}/></button>
+                                            </>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+                {!isLoading && paginatedSchemas.length > 0 && <Pagination />}
             </div>
              {isBackend && (
                 <ModelFormModal
@@ -130,7 +164,7 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
 interface ModelFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: { name: string, description: string }) => void;
+    onSave: (data: { name: string, description?: string }) => void;
     editingSchema: Schema | null;
 }
 

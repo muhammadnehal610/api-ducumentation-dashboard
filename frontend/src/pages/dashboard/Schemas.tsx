@@ -1,30 +1,46 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 // FIX: Changed alias imports to relative paths with extensions for module resolution.
-import { schemas as initialSchemas } from '../../constants/dummyData.ts';
-import { User, SchemaField } from '../../types.ts';
+import { User, SchemaField, Schema } from '../../types.ts';
 import { Plus, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Modal from '../../components/ui/Modal.tsx';
 import Switch from '../../components/ui/Switch.tsx';
+import { apiClient } from '../../services/apiClient.ts';
 
 interface SchemasProps {
     user: User;
+    modelId: string;
     modelName: string;
 }
 
 const ITEMS_PER_PAGE = 10;
 
-const Schemas: React.FC<SchemasProps> = ({ user, modelName }) => {
-    const [schemas, setSchemas] = useState(initialSchemas);
+const Schemas: React.FC<SchemasProps> = ({ user, modelId, modelName }) => {
+    const [schema, setSchema] = useState<Schema | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingField, setEditingField] = useState<SchemaField | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     
     const isBackend = user.role === 'backend';
 
-    const modelFields = useMemo(() => {
-        const model = schemas.find(s => s.name === modelName);
-        return model ? model.fields : [];
-    }, [schemas, modelName]);
+    const fetchSchema = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const response = await apiClient<{ data: Schema }>(`/schemas/${modelId}`);
+            setSchema(response.data);
+        } catch (err: any) {
+            setError(err.message || `Failed to fetch schema for ${modelName}`);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [modelId, modelName]);
+
+    useEffect(() => {
+        fetchSchema();
+    }, [fetchSchema]);
+
+    const modelFields = useMemo(() => schema?.fields || [], [schema]);
 
     const totalPages = Math.ceil(modelFields.length / ITEMS_PER_PAGE);
     const paginatedFields = useMemo(() => {
@@ -42,35 +58,28 @@ const Schemas: React.FC<SchemasProps> = ({ user, modelName }) => {
         setEditingField(null);
     };
 
-    const handleSave = (fieldData: Omit<SchemaField, 'id'>) => {
-        setSchemas(prevSchemas => {
-            return prevSchemas.map(schema => {
-                if (schema.name === modelName) {
-                    let newFields;
-                    if (editingField) { // Editing existing field
-                        newFields = schema.fields.map(f => f.id === editingField.id ? { ...editingField, ...fieldData } : f);
-                    } else { // Adding new field
-                        const newField = { ...fieldData, id: `field_${Date.now()}` };
-                        newFields = [...schema.fields, newField];
-                    }
-                    return { ...schema, fields: newFields };
-                }
-                return schema;
-            });
-        });
-        handleCloseModal();
+    const handleSave = async (fieldData: Omit<SchemaField, 'id'>) => {
+        try {
+            if (editingField) {
+                await apiClient(`/schemas/${modelId}/fields/${editingField.id}`, { method: 'PUT', body: fieldData });
+            } else {
+                await apiClient(`/schemas/${modelId}/fields`, { method: 'POST', body: fieldData });
+            }
+            fetchSchema();
+            handleCloseModal();
+        } catch (err: any) {
+            alert(`Failed to save field: ${err.message}`);
+        }
     };
 
-    const handleDelete = (fieldId: string) => {
+    const handleDelete = async (fieldId: string) => {
         if (window.confirm(`Are you sure you want to delete this field?`)) {
-            setSchemas(prevSchemas => {
-                return prevSchemas.map(schema => {
-                     if (schema.name === modelName) {
-                         return { ...schema, fields: schema.fields.filter(f => f.id !== fieldId) };
-                     }
-                     return schema;
-                });
-            });
+            try {
+                await apiClient(`/schemas/${modelId}/fields/${fieldId}`, { method: 'DELETE' });
+                fetchSchema();
+            } catch (err: any) {
+                alert(`Failed to delete field: ${err.message}`);
+            }
         }
     };
 
@@ -84,10 +93,13 @@ const Schemas: React.FC<SchemasProps> = ({ user, modelName }) => {
             <div className="flex items-center">
                 <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"><ChevronLeft size={16}/></button>
                 <span className="px-2">Page {currentPage} of {totalPages}</span>
-                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"><ChevronRight size={16}/></button>
+                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"><ChevronRight size={16}/></button>
             </div>
         </div>
     );
+    
+    if (isLoading) return <div>Loading schema...</div>;
+    if (error) return <div className="text-red-500">{error}</div>;
 
     return (
         <div>
@@ -95,7 +107,7 @@ const Schemas: React.FC<SchemasProps> = ({ user, modelName }) => {
                 <div>
                     <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">Schema: {modelName}</h1>
                     <p className="text-lg text-gray-600 dark:text-gray-400">
-                        Fields for the <span className="font-semibold">{modelName}</span> model.
+                        {schema?.description}
                     </p>
                 </div>
                 {isBackend && (

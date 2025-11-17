@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlayCircle, Edit } from 'lucide-react';
 // FIX: Changed alias imports to relative paths with extensions for module resolution.
-import { endpoints } from '../../constants/dummyData.ts';
 import Badge from '../../components/ui/Badge.tsx';
 import ParamTable from '../../components/ui/ParamTable.tsx';
 import JsonViewer from '../../components/ui/JsonViewer.tsx';
-import { User, ResponseExample, Param } from '../../types.ts';
+import { User, ResponseExample, Endpoint } from '../../types.ts';
 import Card from '../../components/ui/Card.tsx';
+import { apiClient } from '../../services/apiClient.ts';
 
 interface EndpointDetailProps {
   endpointId: string;
@@ -43,7 +43,33 @@ const ResponseDisplay: React.FC<{ response: ResponseExample }> = ({ response }) 
 );
 
 const EndpointDetail: React.FC<EndpointDetailProps> = ({ endpointId, onNavigateToPlayground, onEditEndpoint, user }) => {
-  const endpoint = endpoints.find(e => e.id === endpointId);
+  const [endpoint, setEndpoint] = useState<Endpoint | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEndpoint = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await apiClient<{ data: Endpoint }>(`/endpoints/${endpointId}`);
+        setEndpoint(response.data);
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch endpoint details.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchEndpoint();
+  }, [endpointId]);
+
+  if (isLoading) {
+    return <div className="text-center p-8">Loading endpoint details...</div>;
+  }
+  
+  if (error) {
+    return <div className="text-center p-8 text-red-500">{error}</div>;
+  }
 
   if (!endpoint) {
     return <div className="text-center p-8 text-gray-500">Endpoint not found.</div>;

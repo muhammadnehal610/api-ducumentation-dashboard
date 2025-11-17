@@ -1,35 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Copy, Server, Lock, GitMerge, Edit, Trash2, Plus, Info } from 'lucide-react';
 // FIX: Changed alias imports to relative paths with extensions for module resolution.
 import Card from '../../components/ui/Card.tsx';
 import { User } from '../../types.ts';
 import Modal from '../../components/ui/Modal.tsx';
+import { apiClient } from '../../services/apiClient.ts';
 
 interface OverviewCardData {
-  id: number;
+  id: string;
   title: string;
   content: string;
-  icon: React.ElementType;
+  icon: 'Server' | 'Lock' | 'GitMerge' | 'Info'; // Mapped from string
   iconColor: string;
   isCode?: boolean;
 }
 
-const initialCards: OverviewCardData[] = [
-    { id: 1, title: 'Base URL', content: 'https://api.example.com', icon: Server, iconColor: 'primary', isCode: true },
-    { id: 2, title: 'Authentication', content: 'This API uses Bearer Token authentication. Include your token in the `Authorization` header.', icon: Lock, iconColor: 'green' },
-    { id: 3, title: 'Current Version', content: 'v2.1.0', icon: GitMerge, iconColor: 'yellow' },
-];
+const ICONS: { [key: string]: React.ElementType } = {
+    Server, Lock, GitMerge, Info
+}
 
 interface OverviewProps {
   user: User;
 }
 
 const Overview: React.FC<OverviewProps> = ({ user }) => {
-  const [cards, setCards] = useState<OverviewCardData[]>(initialCards);
+  const [cards, setCards] = useState<OverviewCardData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<OverviewCardData | null>(null);
 
   const isBackend = user.role === 'backend';
+
+  const fetchCards = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+        const response = await apiClient<{ data: OverviewCardData[] }>('/overview-cards');
+        // A simple mapping from string names to component types
+        const mappedData = response.data.map(card => ({...card, icon: card.icon || 'Info'}));
+        setCards(mappedData);
+    } catch (err: any) {
+        setError(err.message || 'Failed to fetch overview cards.');
+    } finally {
+        setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCards();
+  }, [fetchCards]);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -45,34 +65,50 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
     setEditingCard(null);
   }
 
-  const handleSaveCard = (formData: { title: string, content: string }) => {
-    if (editingCard && editingCard.id) {
-        // Editing existing card
-        setCards(cards.map(c => c.id === editingCard.id ? { ...c, ...formData } : c));
-    } else {
-        // Adding new card
-        const newCard: OverviewCardData = {
-            id: Date.now(),
-            ...formData,
-            icon: Info,
-            iconColor: 'gray',
-        };
-        setCards([...cards, newCard]);
+  const handleSaveCard = async (formData: { title: string, content: string }) => {
+    const payload = { ...formData, icon: 'Info', iconColor: 'gray' }; // Default icon/color for new cards
+    try {
+        if (editingCard) {
+            await apiClient(`/overview-cards/${editingCard.id}`, { method: 'PUT', body: formData });
+        } else {
+            await apiClient('/overview-cards', { method: 'POST', body: payload });
+        }
+        fetchCards();
+        handleCloseModal();
+    } catch (err: any) {
+        alert(`Failed to save card: ${err.message}`);
     }
-    handleCloseModal();
   };
 
-  const handleDeleteCard = (cardId: number) => {
+  const handleDeleteCard = async (cardId: string) => {
     if (window.confirm('Are you sure you want to delete this card?')) {
-        setCards(cards.filter(c => c.id !== cardId));
+        try {
+            await apiClient(`/overview-cards/${cardId}`, { method: 'DELETE' });
+            fetchCards();
+        } catch (err: any) {
+            alert(`Failed to delete card: ${err.message}`);
+        }
     }
   }
   
-  const CardIcon: React.FC<{icon: React.ElementType, color: string}> = ({ icon: Icon, color }) => (
-    <div className={`p-2 bg-${color}-100 dark:bg-${color}-900 rounded-full mr-4`}>
-        <Icon className={`text-${color}-600 dark:text-${color}-300`} />
-    </div>
-  );
+  const CardIcon: React.FC<{iconName: string, color: string}> = ({ iconName, color }) => {
+    const Icon = ICONS[iconName] || Info;
+    const colorClasses = {
+        primary: 'bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-300',
+        green: 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300',
+        yellow: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-300',
+        gray: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300',
+    };
+    const colorClass = colorClasses[color as keyof typeof colorClasses] || colorClasses.gray;
+    return (
+        <div className={`p-2 rounded-full mr-4 ${colorClass.split(' text-')[0]}`}>
+            <Icon className={colorClass.split(' ')[1]} />
+        </div>
+    );
+  };
+
+  if (isLoading) return <div>Loading overview...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
 
   return (
     <div className="space-y-8">
@@ -97,7 +133,7 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
             <Card key={card.id}>
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
-                        <CardIcon icon={card.icon} color={card.iconColor} />
+                        <CardIcon iconName={card.icon} color={card.iconColor} />
                         <h3 className="text-lg font-semibold">{card.title}</h3>
                     </div>
                      {isBackend && (
@@ -114,8 +150,6 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
                         <Copy size={16} />
                         </button>
                     </div>
-                ) : card.title === 'Current Version' ? (
-                     <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{card.content}</p>
                 ) : (
                      <p className="text-sm text-gray-600 dark:text-gray-400">{card.content}</p>
                 )}

@@ -33,14 +33,14 @@ export interface Endpoint {
     bodyExample?: string; // JSON string example for the request body
     successResponses?: ResponseExample[];
     errorResponses?: ResponseExample[];
-    // Deprecated, use successResponses/errorResponses
-    successResponse: Record<string, any>;
-    errorResponse: Record<string, any>;
-    statusCodes: StatusCode[];
+    // Deprecated fields, kept for compatibility if needed during transition
+    successResponse?: Record<string, any>;
+    errorResponse?: Record<string, any>;
+    statusCodes?: StatusCode[];
 }
 
 export interface Param {
-    id?: string | number;
+    id?: string | number; // Optional on frontend, required by DB
     name: string;
     type: string;
     required: boolean;
@@ -48,7 +48,7 @@ export interface Param {
 }
 
 export interface ResponseExample {
-    id?: string | number;
+    id?: string | number; // Optional on frontend, required by DB
     code: number;
     description: string;
     fields?: Param[]; // The schema for the response body
@@ -61,6 +61,7 @@ export interface StatusCode {
 }
 
 export interface Schema {
+    id: string;
     name: string;
     description?: string;
     fields: SchemaField[];

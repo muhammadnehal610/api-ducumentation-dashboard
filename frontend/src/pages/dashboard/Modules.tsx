@@ -1,9 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Briefcase, ChevronRight, Plus, Edit, Trash2, Search, ChevronLeft } from 'lucide-react';
 // FIX: Changed alias imports to relative paths with extensions for module resolution.
-import { services as initialServices } from '../../constants/dummyData.ts';
 import { User } from '../../types.ts';
 import Modal from '../../components/ui/Modal.tsx';
+import { apiClient } from '../../services/apiClient.ts';
+
+interface Module {
+    id: string;
+    name: string;
+    description?: string;
+}
 
 interface ModulesProps {
   onSelectModule: (moduleName: string) => void;
@@ -13,28 +19,46 @@ interface ModulesProps {
 const ITEMS_PER_PAGE = 5;
 
 const Modules: React.FC<ModulesProps> = ({ onSelectModule, user }) => {
-  const [services, setServices] = useState(initialServices);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingModule, setEditingModule] = useState<string | null>(null);
+  const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   
-  const apiModules = useMemo(() => {
-    return services.filter(s => 
-        s !== 'All Services' && 
-        s.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [services, searchTerm]);
+  const fetchModules = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+        const response = await apiClient<{ data: Module[] }>('/modules');
+        setModules(response.data);
+    } catch (err: any) {
+        setError(err.message || "Failed to fetch modules.");
+    } finally {
+        setIsLoading(false);
+    }
+  }, []);
+  
+  useEffect(() => {
+    fetchModules();
+  }, [fetchModules]);
 
-  const totalPages = Math.ceil(apiModules.length / ITEMS_PER_PAGE);
+  const filteredModules = useMemo(() => {
+    return modules.filter(m => 
+        m.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [modules, searchTerm]);
+
+  const totalPages = Math.ceil(filteredModules.length / ITEMS_PER_PAGE);
   const paginatedModules = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return apiModules.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [apiModules, currentPage]);
+    return filteredModules.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredModules, currentPage]);
 
 
-  const handleOpenModal = (moduleName: string | null) => {
-    setEditingModule(moduleName);
+  const handleOpenModal = (module: Module | null) => {
+    setEditingModule(module);
     setIsModalOpen(true);
   };
   
@@ -43,21 +67,29 @@ const Modules: React.FC<ModulesProps> = ({ onSelectModule, user }) => {
       setEditingModule(null);
   }
   
-  const handleSaveModule = (moduleData: { name: string, description: string }) => {
-      if (editingModule) {
-          // Edit
-          setServices(services.map(s => s === editingModule ? moduleData.name : s));
-      } else {
-          // Add
-          setServices([...services, moduleData.name]);
+  const handleSaveModule = async (moduleData: { name: string, description: string }) => {
+      try {
+          if (editingModule) {
+              await apiClient(`/modules/${editingModule.id}`, { method: 'PUT', body: moduleData });
+          } else {
+              await apiClient('/modules', { method: 'POST', body: moduleData });
+          }
+          fetchModules();
+          handleCloseModal();
+      } catch (err: any) {
+          alert(`Failed to save module: ${err.message}`);
       }
-      handleCloseModal();
   }
 
-  const handleDelete = (e: React.MouseEvent, moduleName: string) => {
+  const handleDelete = async (e: React.MouseEvent, module: Module) => {
     e.stopPropagation();
-    if (window.confirm(`Are you sure you want to delete the "${moduleName}" module?`)) {
-        setServices(services.filter(s => s !== moduleName));
+    if (window.confirm(`Are you sure you want to delete the "${module.name}" module?`)) {
+        try {
+            await apiClient(`/modules/${module.id}`, { method: 'DELETE' });
+            fetchModules();
+        } catch (err: any) {
+            alert(`Failed to delete module: ${err.message}`);
+        }
     }
   }
   
@@ -65,9 +97,12 @@ const Modules: React.FC<ModulesProps> = ({ onSelectModule, user }) => {
     <div className="flex justify-end items-center mt-4 text-sm">
         <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 disabled:opacity-50"><ChevronLeft size={16}/></button>
         <span>Page {currentPage} of {totalPages}</span>
-        <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 disabled:opacity-50"><ChevronRight size={16}/></button>
+        <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0} className="p-2 disabled:opacity-50"><ChevronRight size={16}/></button>
     </div>
   );
+
+  if (isLoading) return <div>Loading modules...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
 
   if (user.role === 'frontend') {
     return (
@@ -77,15 +112,15 @@ const Modules: React.FC<ModulesProps> = ({ onSelectModule, user }) => {
                 Browse endpoints grouped by their service module.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {services.filter(s => s !== 'All Services').map(moduleName => (
-                <div key={moduleName} onClick={() => onSelectModule(moduleName)}
+                {modules.map(module => (
+                <div key={module.id} onClick={() => onSelectModule(module.name)}
                     className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-6 flex items-center justify-between cursor-pointer hover:shadow-lg hover:border-primary-500 dark:hover:border-primary-500 transition-all">
                     <div className="flex items-center">
                     <div className="p-3 bg-primary-100 dark:bg-gray-800 rounded-lg mr-4">
                         <Briefcase className="text-primary-600 dark:text-primary-400" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{moduleName}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{module.name}</h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">View Endpoints</p>
                     </div>
                     </div>
@@ -130,39 +165,39 @@ const Modules: React.FC<ModulesProps> = ({ onSelectModule, user }) => {
                     </tr>
                 </thead>
                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                    {paginatedModules.map(moduleName => (
-                    <tr key={moduleName} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td onClick={() => onSelectModule(moduleName)} className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white cursor-pointer">{moduleName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">A collection of endpoints related to {moduleName.toLowerCase()}.</td>
+                    {paginatedModules.map(module => (
+                    <tr key={module.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <td onClick={() => onSelectModule(module.name)} className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white cursor-pointer">{module.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">{module.description || `A collection of endpoints related to ${module.name.toLowerCase()}.`}</td>
                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button onClick={() => handleOpenModal(moduleName)} className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 mr-4"><Edit size={18}/></button>
-                            <button onClick={(e) => handleDelete(e, moduleName)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"><Trash2 size={18}/></button>
+                            <button onClick={() => handleOpenModal(module)} className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 mr-4"><Edit size={18}/></button>
+                            <button onClick={(e) => handleDelete(e, module)} className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"><Trash2 size={18}/></button>
                         </td>
                     </tr>
                     ))}
                  </tbody>
             </table>
         </div>
-        {apiModules.length > 0 && <Pagination />}
+        {filteredModules.length > 0 && <Pagination />}
 
 
-        <ModuleFormModal isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleSaveModule} moduleName={editingModule} />
+        <ModuleFormModal isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleSaveModule} module={editingModule} />
     </div>
   );
 };
 
 const ModuleFormModal: React.FC<{
-    isOpen: boolean; onClose: () => void; onSave: (data: {name: string, description: string}) => void; moduleName: string | null;
-}> = ({isOpen, onClose, onSave, moduleName}) => {
+    isOpen: boolean; onClose: () => void; onSave: (data: {name: string, description: string}) => void; module: Module | null;
+}> = ({isOpen, onClose, onSave, module}) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
 
     React.useEffect(() => {
         if(isOpen) {
-            setName(moduleName || '');
-            setDescription(moduleName ? `A collection of endpoints related to ${moduleName.toLowerCase()}.` : '');
+            setName(module?.name || '');
+            setDescription(module?.description || '');
         }
-    }, [isOpen, moduleName]);
+    }, [isOpen, module]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -170,7 +205,7 @@ const ModuleFormModal: React.FC<{
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={moduleName ? 'Edit Module' : 'Create Module'}>
+        <Modal isOpen={isOpen} onClose={onClose} title={module ? 'Edit Module' : 'Create Module'}>
              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Module Name</label>

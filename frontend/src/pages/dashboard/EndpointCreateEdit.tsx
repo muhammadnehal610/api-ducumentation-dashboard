@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
 // FIX: Changed alias imports to relative paths with extensions for module resolution.
-import { Page, User, Param, HttpMethod, ResponseExample } from '../../types.ts';
-import { endpoints, services } from '../../constants/dummyData.ts';
+import { Page, User, Param, HttpMethod, ResponseExample, Endpoint } from '../../types.ts';
 import Card from '../../components/ui/Card.tsx';
 import Switch from '../../components/ui/Switch.tsx';
 import JsonEditor from '../../components/ui/JsonEditor.tsx';
+import { apiClient } from '../../services/apiClient.ts';
 
 // --- Helper Types & Functions (top-level) ---
 
-type FormParam = Param & { id: string | number };
+type FormParam = Omit<Param, 'id'> & { id: string | number };
 type FormResponse = {
   id: string | number;
   code: number;
@@ -137,7 +137,8 @@ const EndpointCreateEdit: React.FC<EndpointCreateEditProps> = ({ endpointId, onN
   const [method, setMethod] = useState<HttpMethod>('GET');
   const [path, setPath] = useState('');
   const [description, setDescription] = useState('');
-  const [module, setModule] = useState(services[1] || '');
+  const [module, setModule] = useState('');
+  const [modules, setModules] = useState<string[]>([]);
   const [authRequired, setAuthRequired] = useState(false);
 
   const [headers, setHeaders] = useState<FormParam[]>([]);
@@ -147,44 +148,107 @@ const EndpointCreateEdit: React.FC<EndpointCreateEditProps> = ({ endpointId, onN
   
   const [successResponses, setSuccessResponses] = useState<FormResponse[]>([{ ...emptyResponse, id: getUniqueId() }]);
   const [errorResponses, setErrorResponses] = useState<FormResponse[]>([{...emptyResponse, code: 400, body: '{\n  "error": "Bad Request"\n}', id: getUniqueId() }]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+
+  const populateForm = useCallback((endpoint: Endpoint) => {
+    setMethod(endpoint.method);
+    setPath(endpoint.path);
+    setDescription(endpoint.description);
+    setModule(endpoint.module);
+    setAuthRequired(endpoint.authRequired);
+    setBodyExample(endpoint.bodyExample || '{}');
+
+    const mapParams = (params: Param[] | undefined): FormParam[] => 
+        params?.map(p => ({ ...p, id: getUniqueId() })) || [];
+    
+    const mapResponses = (responses: ResponseExample[] | undefined, defaultResponse: Omit<FormResponse, 'id'>): FormResponse[] => {
+        if (responses && responses.length > 0) {
+            return responses.map(r => ({ 
+                id: getUniqueId(), 
+                code: r.code, 
+                description: r.description, 
+                fields: mapParams(r.fields),
+                body: JSON.stringify(r.body, null, 2)
+            }));
+        }
+        return [{ ...defaultResponse, id: getUniqueId() }];
+    };
+
+    setHeaders(mapParams(endpoint.headers));
+    setQueryParams(mapParams(endpoint.queryParams));
+    setBodyParams(mapParams(endpoint.bodyParams));
+    setSuccessResponses(mapResponses(endpoint.successResponses, emptyResponse));
+    setErrorResponses(mapResponses(endpoint.errorResponses, {...emptyResponse, code: 400, body: '{\n  "error": "Bad Request"\n}'}));
+  }, []);
 
   useEffect(() => {
-    if (endpointId) {
-      const endpoint = endpoints.find(e => e.id === endpointId);
-      if (endpoint) {
-        setMethod(endpoint.method);
-        setPath(endpoint.path);
-        setDescription(endpoint.description);
-        setModule(endpoint.module);
-        setAuthRequired(endpoint.authRequired);
-        setBodyExample(endpoint.bodyExample || '{}');
-        
-        const hasContent = (arr: any[] | undefined) => arr && arr.length > 0;
-        const mapResponses = (responses: ResponseExample[] | undefined, defaultResponse: Omit<FormResponse, 'id'>): FormResponse[] => {
-            if (hasContent(responses)) {
-                return responses!.map(r => ({ 
-                    id: getUniqueId(), 
-                    code: r.code, 
-                    description: r.description, 
-                    fields: r.fields?.map(f => ({ ...f, id: getUniqueId() })) || [],
-                    body: JSON.stringify(r.body, null, 2)
-                }));
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const moduleRes = await apiClient<{ data: { name: string }[] }>('/modules');
+            const moduleNames = moduleRes.data.map(m => m.name);
+            setModules(moduleNames);
+
+            if (endpointId) {
+                const endpointRes = await apiClient<{ data: Endpoint }>(`/endpoints/${endpointId}`);
+                populateForm(endpointRes.data);
+            } else {
+                 if (moduleNames.length > 0) {
+                    setModule(moduleNames[0]);
+                }
             }
-            return [{ ...defaultResponse, id: getUniqueId() }];
+        } catch (err: any) {
+            setError(err.message || 'Failed to load data.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchData();
+  }, [endpointId, populateForm]);
+  
+  const handleSave = async () => {
+    setError('');
+    const transformFormState = (items: (FormParam[] | FormResponse[])) => {
+        return items.map(({ id, ...rest }: any) => {
+            if (rest.body) {
+                try {
+                    rest.body = JSON.parse(rest.body);
+                } catch (e) {
+                    setError('Invalid JSON in one of the response bodies.');
+                    throw e; // Stop execution
+                }
+            }
+            if (rest.fields) {
+                rest.fields = rest.fields.map(({id: fieldId, ...fieldRest}: any) => fieldRest);
+            }
+            return rest;
+        });
+    };
+    
+    try {
+        const payload = {
+            method, path, description, module, authRequired, bodyExample,
+            headers: transformFormState(headers),
+            queryParams: transformFormState(queryParams),
+            bodyParams: transformFormState(bodyParams),
+            successResponses: transformFormState(successResponses),
+            errorResponses: transformFormState(errorResponses),
         };
         
-        setHeaders(endpoint.headers?.map(p => ({ ...p, id: getUniqueId() })) || []);
-        setQueryParams(endpoint.queryParams?.map(p => ({ ...p, id: getUniqueId() })) || []);
-        setBodyParams(endpoint.bodyParams?.map(p => ({ ...p, id: getUniqueId() })) || []);
-        setSuccessResponses(mapResponses(endpoint.successResponses, emptyResponse));
-        setErrorResponses(mapResponses(endpoint.errorResponses, {...emptyResponse, code: 400, body: '{\n  "error": "Bad Request"\n}'}));
-      }
+        if (endpointId) {
+            await apiClient(`/endpoints/${endpointId}`, { method: 'PUT', body: payload });
+        } else {
+            await apiClient('/endpoints', { method: 'POST', body: payload });
+        }
+        onNavigate('Endpoints');
+    } catch (err: any) {
+        console.error('Save failed:', err);
+        if (!error) { // Don't overwrite JSON parsing error
+             setError(err.message || 'Failed to save endpoint.');
+        }
     }
-  }, [endpointId]);
-  
-  const handleSave = () => {
-    console.log('Saving endpoint...');
-    onNavigate('Endpoints');
   };
   
   const headerManager = useMemo(() => createListUpdater(setHeaders), []);
@@ -207,6 +271,8 @@ const EndpointCreateEdit: React.FC<EndpointCreateEditProps> = ({ endpointId, onN
   const successResponseManager = useMemo(() => createResponseManager(setSuccessResponses), []);
   const errorResponseManager = useMemo(() => createResponseManager(setErrorResponses), []);
   
+  if (isLoading) return <div>Loading...</div>;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-center justify-between">
@@ -220,6 +286,7 @@ const EndpointCreateEdit: React.FC<EndpointCreateEditProps> = ({ endpointId, onN
           </button>
         </div>
       </div>
+      {error && <p className="text-red-500 bg-red-100 dark:bg-red-900 p-3 rounded-md">{error}</p>}
         
       <Card title="General Information">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -236,7 +303,7 @@ const EndpointCreateEdit: React.FC<EndpointCreateEditProps> = ({ endpointId, onN
               <div>
                   <label className="block text-sm font-medium mb-1">Module</label>
                   <select value={module} onChange={e => setModule(e.target.value)} className="w-full p-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md">
-                      {services.filter(s => s !== 'All Services').map(s => <option key={s}>{s}</option>)}
+                      {modules.map(s => <option key={s}>{s}</option>)}
                   </select>
               </div>
               <div className="flex items-center space-x-2 pt-5">

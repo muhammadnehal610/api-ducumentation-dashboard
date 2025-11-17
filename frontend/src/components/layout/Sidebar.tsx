@@ -2,12 +2,12 @@ import React, { useMemo } from 'react';
 import { LayoutDashboard, Code, Book, PlayCircle, FileJson, Lock, GitMerge, AlertTriangle, GitBranch, SettingsIcon, ChevronDown, ChevronsLeft, ChevronsRight, Briefcase, Users } from 'lucide-react';
 // FIX: Changed alias imports to relative paths with extensions for module resolution.
 import { Page, User } from '../../types.ts';
-import { services } from '../../constants/dummyData.ts';
 
 interface SidebarProps {
   onNavigate: (page: Page) => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  services: string[];
   selectedService: string;
   setSelectedService: (service: string) => void;
   user: User;
@@ -27,7 +27,7 @@ const allNavItems: { page: Page; icon: React.ElementType; roles: User['role'][] 
   { page: 'Settings', icon: SettingsIcon, roles: ['frontend', 'backend'] },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ onNavigate, isOpen, setIsOpen, selectedService, setSelectedService, user }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onNavigate, isOpen, setIsOpen, services, selectedService, setSelectedService, user }) => {
     
     const navItems = useMemo(() => {
         return allNavItems.filter(item => item.roles.includes(user.role));
@@ -48,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigate, isOpen, setIsOpen, select
       <div className="flex items-center justify-between p-4 border-b border-gray-800" style={{ minHeight: '65px' }}>
           <div className={`flex items-center ${!isOpen ? 'w-full justify-center' : ''}`}>
              <Book size={28} className="text-primary-400" />
-            <h1 className={`text-xl font-bold ml-2 transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 hidden'}`}>API Docs</h1>
+            <h1 className={`text-xl font-bold ml-2 transition-opacity duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 hidden'}`}>{`API Docs`}</h1>
           </div>
           <button onClick={() => setIsOpen(!isOpen)} className="hidden lg:block p-1 rounded-full hover:bg-gray-700">
              {isOpen ? <ChevronsLeft size={20}/> : <ChevronsRight size={20}/>}

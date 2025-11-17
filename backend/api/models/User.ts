@@ -1,9 +1,19 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { User as IUser } from '../../types';
+
+// Define the User interface directly within the model file
+export interface IUser {
+    id: string;
+    name: string;
+    email: string;
+    password?: string;
+    role: 'frontend' | 'backend';
+    status: 'active' | 'inactive';
+}
+
 
 // Extend the IUser interface to include Mongoose's Document properties
-export interface IUserDocument extends IUser, Document {
+export interface IUserDocument extends Omit<IUser, 'id'>, Document {
     // Mongoose adds its own `id` virtual getter, so the `id` from IUser is fine.
 }
 

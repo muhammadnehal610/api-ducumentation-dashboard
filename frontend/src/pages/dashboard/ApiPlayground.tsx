@@ -3,8 +3,8 @@ import { Send } from 'lucide-react';
 // FIX: Changed alias imports to relative paths with extensions for module resolution.
 import Card from '../../components/ui/Card.tsx';
 import JsonViewer from '../../components/ui/JsonViewer.tsx';
-import { endpoints } from '../../constants/dummyData.ts';
 import { Endpoint, User } from '../../types.ts';
+import { apiClient } from '../../services/apiClient.ts';
 
 interface ApiPlaygroundProps {
     selectedEndpointId: string | null;
@@ -12,20 +12,37 @@ interface ApiPlaygroundProps {
 }
 
 const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ selectedEndpointId, user }) => {
-  const [endpointId, setEndpointId] = useState(selectedEndpointId || endpoints[0].id);
+  const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
+  const [endpointId, setEndpointId] = useState('');
   const [headers, setHeaders] = useState('{\n  "Authorization": "Bearer YOUR_API_KEY"\n}');
   const [body, setBody] = useState('');
   const [response, setResponse] = useState<object | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const selectedEndpoint = endpoints.find(e => e.id === endpointId) as Endpoint;
+  const selectedEndpoint = endpoints.find(e => e.id === endpointId);
 
   useEffect(() => {
-    if(selectedEndpointId) setEndpointId(selectedEndpointId);
+    const fetchEndpoints = async () => {
+        try {
+            const res = await apiClient<{ data: Endpoint[] }>('/endpoints');
+            setEndpoints(res.data);
+            if (selectedEndpointId) {
+                setEndpointId(selectedEndpointId);
+            } else if (res.data.length > 0) {
+                setEndpointId(res.data[0].id);
+            }
+        } catch (err) {
+            setError('Failed to load endpoints.');
+        }
+    };
+    fetchEndpoints();
   }, [selectedEndpointId]);
 
   useEffect(() => {
-    const defaultBody = selectedEndpoint.bodyParams 
+    if (!selectedEndpoint) return;
+
+    const defaultBody = selectedEndpoint.bodyParams && selectedEndpoint.bodyParams.length > 0
         ? JSON.stringify(
             selectedEndpoint.bodyParams.reduce((acc, param) => {
                 acc[param.name] = param.type;
@@ -36,16 +53,34 @@ const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ selectedEndpointId, user 
         ) : '{}';
     setBody(defaultBody);
     setResponse(null);
-  }, [endpointId, selectedEndpoint.bodyParams]);
+  }, [endpointId, selectedEndpoint]);
   
   const handleSendRequest = () => {
+    if (!selectedEndpoint) return;
+
     setIsLoading(true);
     setResponse(null);
     setTimeout(() => {
-      setResponse(selectedEndpoint.successResponse);
+      // In a real app, this would be a fetch call.
+      // We simulate success or error based on available examples.
+      if (selectedEndpoint.successResponses && selectedEndpoint.successResponses.length > 0) {
+          setResponse(selectedEndpoint.successResponses[0].body);
+      } else if (selectedEndpoint.errorResponses && selectedEndpoint.errorResponses.length > 0) {
+          setResponse(selectedEndpoint.errorResponses[0].body);
+      } else {
+          setResponse({ message: "No response example available." });
+      }
       setIsLoading(false);
     }, 1000);
   };
+
+  if (error) {
+    return <div className="text-red-500 text-center">{error}</div>;
+  }
+
+  if (endpoints.length === 0) {
+    return <div className="text-center">Loading playground...</div>;
+  }
 
   return (
     <div>
@@ -79,7 +114,7 @@ const ApiPlayground: React.FC<ApiPlaygroundProps> = ({ selectedEndpointId, user 
               />
             </div>
 
-            {selectedEndpoint.bodyParams && (
+            {selectedEndpoint?.bodyParams && (
               <div>
                 <label htmlFor="body-editor" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Body</label>
                 <textarea

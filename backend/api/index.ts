@@ -1,12 +1,20 @@
 
+
 import dotenv from 'dotenv';
 dotenv.config();
 
 // FIX: Change to default import to resolve type conflicts.
-import express from 'express';
+// FIX: Added named imports for Request, Response, and ErrorRequestHandler to ensure correct type definitions are used.
+import express, { Request, Response, ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
+import endpointRoutes from './routes/endpoints';
+import moduleRoutes from './routes/modules';
+import schemaRoutes from './routes/modelSchemas';
+import errorCodeRoutes from './routes/errorCodes';
+import changelogRoutes from './routes/changelog';
+import overviewCardRoutes from './routes/overviewCards';
 import connectDB from './config/db';
 
 // Connect to database
@@ -20,16 +28,25 @@ app.use(express.json());
 
 // API Routes
 // FIX: Use explicit types from the express default import.
-app.get('/api', (req: express.Request, res: express.Response) => {
+// FIX: Used imported Request and Response types.
+app.get('/api', (req: Request, res: Response) => {
   res.send('API is running...');
 });
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/endpoints', endpointRoutes);
+app.use('/api/modules', moduleRoutes);
+app.use('/api/schemas', schemaRoutes);
+app.use('/api/error-codes', errorCodeRoutes);
+app.use('/api/changelog', changelogRoutes);
+app.use('/api/overview-cards', overviewCardRoutes);
+
 
 // Simple Error Handler
 // FIX: Use explicit types from the express default import.
-const errorHandler: express.ErrorRequestHandler = (err, req, res, next) => {
+// FIX: Used imported ErrorRequestHandler type.
+const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ success: false, message: err.message || 'Something went wrong!' });
 };
