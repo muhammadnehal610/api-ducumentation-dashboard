@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { LayoutDashboard, Code, Book, PlayCircle, FileJson, Lock, GitMerge, AlertTriangle, GitBranch, SettingsIcon, ChevronDown, ChevronsLeft, ChevronsRight, Briefcase, Users } from 'lucide-react';
+import { LayoutDashboard, Code, Book, PlayCircle, FileJson, Lock, GitMerge, AlertTriangle, GitBranch, SettingsIcon, ChevronDown, ChevronsLeft, ChevronsRight, Briefcase, Users, Server } from 'lucide-react';
 // FIX: Changed alias imports to relative paths with extensions for module resolution.
 import { Page, User } from '../../types.ts';
 
@@ -15,7 +15,7 @@ interface SidebarProps {
 
 const allNavItems: { page: Page; icon: React.ElementType; roles: User['role'][] }[] = [
   { page: 'Overview', icon: LayoutDashboard, roles: ['frontend', 'backend'] },
-  { page: 'Modules', icon: Briefcase, roles: ['frontend', 'backend'] },
+  { page: 'Service Management', icon: Server, roles: ['frontend', 'backend'] },
   { page: 'Endpoints', icon: Code, roles: ['frontend', 'backend'] },
   { page: 'API Playground', icon: PlayCircle, roles: ['frontend', 'backend'] },
   { page: 'Schemas', icon: FileJson, roles: ['frontend', 'backend'] },

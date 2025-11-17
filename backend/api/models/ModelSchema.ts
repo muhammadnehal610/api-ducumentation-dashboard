@@ -11,6 +11,7 @@ interface ISchemaField extends Types.Subdocument {
 interface IModelSchema extends Document {
     name: string;
     description?: string;
+    module: string;
     // FIX: Correctly type `fields` as a Mongoose DocumentArray to expose subdocument array methods like `.id()`.
     fields: mongoose.Types.DocumentArray<ISchemaField>;
 }
@@ -31,6 +32,10 @@ const ModelSchemaSchema: Schema<IModelSchema> = new Schema({
     },
     description: {
         type: String
+    },
+    module: {
+        type: String,
+        required: true
     },
     fields: [SchemaFieldSchema]
 }, {

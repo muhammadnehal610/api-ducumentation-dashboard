@@ -1,6 +1,5 @@
-
-
-
+// FIX: Add a reference to Node.js types to resolve type errors for `require` and `module`.
+/// <reference types="node" />
 import dotenv from 'dotenv';
 dotenv.config();
 

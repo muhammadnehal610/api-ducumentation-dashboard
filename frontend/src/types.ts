@@ -9,7 +9,7 @@ export interface User {
     status: 'active' | 'inactive';
 }
 
-export type Page = 'Overview' | 'Modules' | 'Endpoints' | 'Endpoint Details' | 'Endpoint Form' | 'API Playground' | 'Schemas' | 'Models' | 'SchemaDetails' | 'Authentication' | 'Flows' | 'Error Codes' | 'Changelog' | 'Settings' | 'User Management';
+export type Page = 'Overview' | 'Service Management' | 'Endpoints' | 'Endpoint Details' | 'Endpoint Form' | 'API Playground' | 'Schemas' | 'Models' | 'SchemaDetails' | 'Authentication' | 'Flows' | 'Error Codes' | 'Changelog' | 'Settings' | 'User Management';
 export type AuthPage = 'login' | 'register';
 
 export interface Breadcrumb {
@@ -64,6 +64,7 @@ export interface Schema {
     id: string;
     name: string;
     description?: string;
+    module: string;
     fields: SchemaField[];
 }
 

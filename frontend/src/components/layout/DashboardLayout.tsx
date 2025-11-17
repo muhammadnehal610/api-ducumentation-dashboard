@@ -22,6 +22,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user, onLog
   useEffect(() => {
     const fetchServices = async () => {
         try {
+            // Fetch all services for the dropdown
             const response = await apiClient<{ data: { name: string }[] }>('/modules');
             const serviceNames = ['All Services', ...response.data.map(s => s.name)];
             setServices(serviceNames);

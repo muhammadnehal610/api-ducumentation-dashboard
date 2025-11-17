@@ -55,7 +55,7 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
         setEditingSchema(null);
     };
 
-    const handleSave = async (schemaData: { name: string, description?: string }) => {
+    const handleSave = async (schemaData: { name: string, description?: string, module: string }) => {
         try {
             if (editingSchema) {
                 await apiClient(`/schemas/${editingSchema.id}`, { method: 'PUT', body: schemaData });
@@ -164,24 +164,44 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
 interface ModelFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: { name: string, description?: string }) => void;
+    onSave: (data: { name: string, description?: string, module: string }) => void;
     editingSchema: Schema | null;
 }
 
 const ModelFormModal: React.FC<ModelFormModalProps> = ({ isOpen, onClose, onSave, editingSchema }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [module, setModule] = useState('');
+    const [modules, setModules] = useState<{name: string}[]>([]);
+
+    useEffect(() => {
+        const fetchModules = async () => {
+            if (isOpen) {
+                try {
+                    const res = await apiClient<{ data: {name: string}[] }>('/modules');
+                    setModules(res.data);
+                    if (res.data.length > 0) {
+                        setModule(editingSchema?.module || res.data[0].name);
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch modules for modal");
+                }
+            }
+        };
+        fetchModules();
+    }, [isOpen, editingSchema]);
 
     React.useEffect(() => {
         if (isOpen) {
             setName(editingSchema?.name || '');
             setDescription(editingSchema?.description || '');
+            setModule(editingSchema?.module || (modules.length > 0 ? modules[0].name : ''));
         }
-    }, [isOpen, editingSchema]);
+    }, [isOpen, editingSchema, modules]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({ name, description });
+        onSave({ name, description, module });
     };
 
     return (
@@ -190,6 +210,12 @@ const ModelFormModal: React.FC<ModelFormModalProps> = ({ isOpen, onClose, onSave
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Model Name</label>
                     <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g., User" className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md" required />
+                </div>
+                 <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Service / Module</label>
+                    <select value={module} onChange={e => setModule(e.target.value)} className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md" required>
+                       {modules.map(m => <option key={m.name} value={m.name}>{m.name}</option>)}
+                    </select>
                 </div>
                  <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>

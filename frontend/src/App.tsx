@@ -15,7 +15,7 @@ import Flows from './pages/dashboard/Flows.tsx';
 import ErrorCodes from './pages/dashboard/ErrorCodes.tsx';
 import Changelog from './pages/dashboard/Changelog.tsx';
 import Settings from './pages/dashboard/Settings.tsx';
-import Modules from './pages/dashboard/Modules.tsx';
+import ServiceManagement from './pages/dashboard/ServiceManagement.tsx';
 import UserManagement from './pages/dashboard/UserManagement.tsx';
 import { Page, AuthPage, User, Breadcrumb } from './types.ts';
 import { apiClient } from './services/apiClient.ts';
@@ -28,7 +28,7 @@ const App: React.FC = () => {
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([{ name: 'Home', page: 'Overview' }]);
   
   const [selectedEndpointId, setSelectedEndpointId] = useState<string | null>(null);
-  const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const [selectedModelName, setSelectedModelName] = useState<string | null>(null);
 
@@ -58,7 +58,7 @@ const App: React.FC = () => {
     setPage(newPage);
     if (!['Endpoint Details', 'Endpoints', 'Endpoint Form', 'SchemaDetails', 'Schemas'].includes(newPage)) {
         setSelectedEndpointId(null);
-        setSelectedModule(null);
+        setSelectedService(null);
         setSelectedModelId(null);
         setSelectedModelName(null);
     }
@@ -89,13 +89,13 @@ const App: React.FC = () => {
     handleNavigate('Endpoint Details', newBreadcrumbs);
   };
   
-  const handleSelectModule = (moduleName: string) => {
-    setSelectedModule(moduleName);
+  const handleSelectService = (serviceName: string) => {
+    setSelectedService(serviceName);
     setPage('Endpoints');
     setBreadcrumbs([
       { name: 'Home', page: 'Overview' },
-      { name: 'Modules', page: 'Modules' },
-      { name: moduleName, page: 'Endpoints' }
+      { name: 'Service Management', page: 'Service Management' },
+      { name: serviceName, page: 'Endpoints' }
     ]);
   };
   
@@ -188,8 +188,8 @@ const App: React.FC = () => {
 
     const pages = {
         'Overview': <Overview {...pageProps} />,
-        'Modules': <Modules {...pageProps} onSelectModule={handleSelectModule} />,
-        'Endpoints': <EndpointsList {...pageProps} onSelectEndpoint={handleSelectEndpoint} selectedModule={selectedModule} onCreateEndpoint={handleCreateEndpoint} onEditEndpoint={handleEditEndpoint} />,
+        'Service Management': <ServiceManagement {...pageProps} onSelectService={handleSelectService} />,
+        'Endpoints': <EndpointsList {...pageProps} onSelectEndpoint={handleSelectEndpoint} selectedService={selectedService} onCreateEndpoint={handleCreateEndpoint} onEditEndpoint={handleEditEndpoint} />,
         'API Playground': <ApiPlayground {...pageProps} selectedEndpointId={selectedEndpointId} />,
         'Schemas': <Models {...pageProps} onSelectModel={handleSelectModel} />,
         'Authentication': <AuthenticationInfo {...pageProps} />,

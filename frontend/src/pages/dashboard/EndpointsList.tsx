@@ -9,14 +9,14 @@ interface EndpointsListProps {
   onSelectEndpoint: (endpointId: string, endpointPath: string) => void;
   onCreateEndpoint: () => void;
   onEditEndpoint: (endpointId: string) => void;
-  selectedModule: string | null;
+  selectedService: string | null;
   user: User;
 }
 
 const methodFilters: HttpMethod[] = ['GET', 'POST', 'PUT', 'DELETE'];
 const ITEMS_PER_PAGE = 10;
 
-const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreateEndpoint, onEditEndpoint, selectedModule, user }) => {
+const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreateEndpoint, onEditEndpoint, selectedService, user }) => {
   const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,10 +58,10 @@ const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreat
       const matchesSearch = endpoint.path.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             endpoint.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesFilter = activeFilters.size === 0 || activeFilters.has(endpoint.method);
-      const matchesModule = !selectedModule || selectedModule === 'All Services' || endpoint.module === selectedModule;
+      const matchesModule = !selectedService || selectedService === 'All Services' || endpoint.module === selectedService;
       return matchesSearch && matchesFilter && matchesModule;
     });
-  }, [endpoints, searchTerm, activeFilters, selectedModule]);
+  }, [endpoints, searchTerm, activeFilters, selectedService]);
   
   const totalPages = Math.ceil(filteredEndpoints.length / ITEMS_PER_PAGE);
   const paginatedEndpoints = useMemo(() => {
@@ -102,7 +102,7 @@ const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreat
         <div>
             <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">Endpoints</h1>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-                {selectedModule && selectedModule !== 'All Services' ? `Endpoints for ${selectedModule}` : 'A list of all available API endpoints.'}
+                {selectedService && selectedService !== 'All Services' ? `Endpoints for ${selectedService}` : 'A list of all available API endpoints.'}
             </p>
         </div>
         {user.role === 'backend' && (

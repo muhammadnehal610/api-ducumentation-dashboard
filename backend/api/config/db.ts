@@ -1,3 +1,5 @@
+// FIX: Add a reference to Node.js types to resolve the type error for `process.exit`.
+/// <reference types="node" />
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 

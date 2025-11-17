@@ -1,3 +1,6 @@
+// FIX: Add a reference to Node.js types to resolve the type error for `__dirname`.
+/// <reference types="node" />
+
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'

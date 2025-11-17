@@ -1,14 +1,48 @@
 import { RequestHandler } from 'express';
 import Module from '../models/Module';
+import Endpoint from '../models/Endpoint';
+import ModelSchema from '../models/ModelSchema';
 
-// @desc    Get all modules
+// @desc    Get all modules with pagination and search
 // @route   GET /api/modules
 // @access  Public
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const getModules: RequestHandler = async (req, res, next) => {
     try {
-        const modules = await Module.find({});
-        res.status(200).json({ success: true, count: modules.length, data: modules });
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const search = req.query.search as string || '';
+
+        const skip = (page - 1) * limit;
+
+        const query: any = {};
+        if (search) {
+            query.name = { $regex: search, $options: 'i' };
+        }
+
+        const modules = await Module.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const total = await Module.countDocuments(query);
+        const totalPages = Math.ceil(total / limit);
+        
+        // For dropdowns, if no limit is specified, return all
+        if (!req.query.limit) {
+            const allModules = await Module.find({}).sort({ name: 1 });
+            return res.status(200).json({ success: true, count: allModules.length, data: allModules });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                services: modules,
+                total,
+                page,
+                limit,
+                totalPages,
+            }
+        });
     } catch (error) {
         next(error);
     }
@@ -17,7 +51,6 @@ export const getModules: RequestHandler = async (req, res, next) => {
 // @desc    Create a module
 // @route   POST /api/modules
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const createModule: RequestHandler = async (req, res, next) => {
     try {
         const module = await Module.create(req.body);
@@ -27,36 +60,55 @@ export const createModule: RequestHandler = async (req, res, next) => {
     }
 };
 
-// @desc    Update a module
+// @desc    Update a module and cascade changes
 // @route   PUT /api/modules/:id
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const updateModule: RequestHandler = async (req, res, next) => {
     try {
-        const module = await Module.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true
-        });
+        const { name } = req.body;
+        
+        const module = await Module.findById(req.params.id);
+
         if (!module) {
             return res.status(404).json({ success: false, message: 'Module not found.' });
         }
-        res.status(200).json({ success: true, data: module });
+
+        const oldName = module.name;
+        
+        // If name is changing, cascade the update
+        if (name && oldName !== name) {
+            await Endpoint.updateMany({ module: oldName }, { module: name });
+            await ModelSchema.updateMany({ module: oldName }, { module: name });
+        }
+
+        module.name = name || module.name;
+        module.description = req.body.description || module.description;
+        const updatedModule = await module.save();
+
+        res.status(200).json({ success: true, data: updatedModule });
     } catch (error) {
         next(error);
     }
 };
 
-// @desc    Delete a module
+// @desc    Delete a module and all related data
 // @route   DELETE /api/modules/:id
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const deleteModule: RequestHandler = async (req, res, next) => {
     try {
-        const module = await Module.findByIdAndDelete(req.params.id);
+        const module = await Module.findById(req.params.id);
+
         if (!module) {
             return res.status(404).json({ success: false, message: 'Module not found.' });
         }
-        res.status(200).json({ success: true, message: 'Module deleted successfully.' });
+        
+        // Cascade delete
+        await Endpoint.deleteMany({ module: module.name });
+        await ModelSchema.deleteMany({ module: module.name });
+
+        await module.deleteOne();
+
+        res.status(200).json({ success: true, message: 'Module and all related data deleted successfully.' });
     } catch (error) {
         next(error);
     }
