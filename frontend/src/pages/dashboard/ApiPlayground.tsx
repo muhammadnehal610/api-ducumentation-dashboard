@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Send } from 'lucide-react';
-import Card from '@/components/ui/Card';
-import JsonViewer from '@/components/ui/JsonViewer';
-import { endpoints } from '@/constants/dummyData';
-import { Endpoint, User } from '@/types';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import Card from '../../components/ui/Card.tsx';
+import JsonViewer from '../../components/ui/JsonViewer.tsx';
+import { endpoints } from '../../constants/dummyData.ts';
+import { Endpoint, User } from '../../types.ts';
 
 interface ApiPlaygroundProps {
     selectedEndpointId: string | null;

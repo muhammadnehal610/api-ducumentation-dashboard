@@ -1,10 +1,10 @@
 // Fix: Use direct Express Request and Response types to avoid conflicts.
-import { Request, Response, NextFunction } from 'express';
+import { RequestHandler } from 'express';
 import User from '../models/User';
 import bcrypt from 'bcryptjs';
 
 // Create User (by Admin)
-export const createUser = async (req: Request, res: Response, next: NextFunction) => {
+export const createUser: RequestHandler = async (req, res, next) => {
     const { name, email, password, role, status } = req.body;
      try {
         if (!name || !email || !password || !role) {
@@ -36,7 +36,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 };
 
 // Read Users
-export const getUsers = async (req: Request, res: Response, next: NextFunction) => {
+export const getUsers: RequestHandler = async (req, res, next) => {
     try {
         const users = await User.findAll(req.query);
         res.status(200).json({ success: true, count: users.length, data: users });
@@ -46,7 +46,7 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction) 
 };
 
 // Update User
-export const updateUser = async (req: Request, res: Response, next: NextFunction) => {
+export const updateUser: RequestHandler = async (req, res, next) => {
     const { id } = req.params;
     const { name, email, role, status } = req.body;
     try {
@@ -61,7 +61,7 @@ export const updateUser = async (req: Request, res: Response, next: NextFunction
 };
 
 // Delete User
-export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteUser: RequestHandler = async (req, res, next) => {
      const { id } = req.params;
     try {
         const success = await User.delete(id);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Book } from 'lucide-react';
-import { User, UserRole } from '@/types';
+// FIX: Changed alias import to relative path with extension for module resolution.
+import { User, UserRole } from '../../types.ts';
 
 interface RegisterPageProps {
   onRegister: (user: Omit<User, 'id' | 'status'>) => Promise<void>;

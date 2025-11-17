@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { LayoutDashboard, Code, Book, PlayCircle, FileJson, Lock, GitMerge, AlertTriangle, GitBranch, SettingsIcon, ChevronDown, ChevronsLeft, ChevronsRight, Briefcase, Users } from 'lucide-react';
-import { Page, User } from '@/types';
-import { services } from '@/constants/dummyData';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import { Page, User } from '../../types.ts';
+import { services } from '../../constants/dummyData.ts';
 
 interface SidebarProps {
   onNavigate: (page: Page) => void;

@@ -1,4 +1,5 @@
-import { Endpoint, Schema, User } from '@/types';
+// FIX: Changed alias import to relative path with extension for module resolution.
+import { Endpoint, Schema, User } from '../types.ts';
 
 export const services = [
     'All Services', 'Auth Service', 'User Service', 'Payment Service', 'Notification Service', 'Admin API', 'Mobile API'

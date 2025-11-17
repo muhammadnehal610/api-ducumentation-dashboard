@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
-import { Page, User, Param, HttpMethod, ResponseExample } from '@/types';
-import { endpoints, services } from '@/constants/dummyData';
-import Card from '@/components/ui/Card';
-import Switch from '@/components/ui/Switch';
-import JsonEditor from '@/components/ui/JsonEditor';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import { Page, User, Param, HttpMethod, ResponseExample } from '../../types.ts';
+import { endpoints, services } from '../../constants/dummyData.ts';
+import Card from '../../components/ui/Card.tsx';
+import Switch from '../../components/ui/Switch.tsx';
+import JsonEditor from '../../components/ui/JsonEditor.tsx';
 
 // --- Helper Types & Functions (top-level) ---
 

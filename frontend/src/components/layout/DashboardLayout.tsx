@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import Sidebar from './Sidebar';
-import Navbar from './Navbar';
-import Breadcrumbs from '../ui/Breadcrumbs';
-import { Page, User, Breadcrumb } from '@/types';
-import { services } from '@/constants/dummyData';
+import Sidebar from './Sidebar.tsx';
+import Navbar from './Navbar.tsx';
+import Breadcrumbs from '../ui/Breadcrumbs.tsx';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import { Page, User, Breadcrumb } from '../../types.ts';
+import { services } from '../../constants/dummyData.ts';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

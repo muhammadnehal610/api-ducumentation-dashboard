@@ -1,7 +1,8 @@
 import React from 'react';
 import { Plus, Edit, AlertTriangle, Bug } from 'lucide-react';
-import { changelogItems } from '@/constants/dummyData';
-import { User } from '@/types';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import { changelogItems } from '../../constants/dummyData.ts';
+import { User } from '../../types.ts';
 
 interface ChangelogProps {
     user: User;

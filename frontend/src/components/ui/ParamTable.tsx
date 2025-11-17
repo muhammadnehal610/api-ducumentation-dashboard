@@ -1,5 +1,6 @@
 import React from 'react';
-import { Param } from '@/types';
+// FIX: Changed alias import to relative path with extension for module resolution.
+import { Param } from '../../types.ts';
 
 interface ParamTableProps {
   title: string;

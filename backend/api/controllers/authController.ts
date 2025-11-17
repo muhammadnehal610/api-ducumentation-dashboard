@@ -1,10 +1,10 @@
 // Fix: Use direct Express Request and Response types to avoid conflicts.
-import { Request, Response, NextFunction } from 'express';
+import { RequestHandler } from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
 import { generateToken, generateRefreshToken } from '../utils/tokenUtils';
 
-export const signup = async (req: Request, res: Response, next: NextFunction) => {
+export const signup: RequestHandler = async (req, res, next) => {
     const { name, email, password, role } = req.body;
 
     try {
@@ -35,7 +35,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
     }
 };
 
-export const signin = async (req: Request, res: Response, next: NextFunction) => {
+export const signin: RequestHandler = async (req, res, next) => {
     const { email, password } = req.body;
 
     try {
@@ -82,7 +82,7 @@ export const signin = async (req: Request, res: Response, next: NextFunction) =>
     }
 };
 
-export const logout = (req: Request, res: Response, next: NextFunction) => {
+export const logout: RequestHandler = (req, res, next) => {
     // In a real-world stateless JWT implementation, logout is handled client-side by deleting tokens.
     // If using a refresh token blacklist, you would invalidate the token here.
     res.status(200).json({ success: true, message: 'Logged out successfully.' });

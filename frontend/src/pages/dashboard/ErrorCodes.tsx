@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { errorCodes as initialErrorCodes } from '@/constants/dummyData';
-import { User } from '@/types';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import { errorCodes as initialErrorCodes } from '../../constants/dummyData.ts';
+import { User } from '../../types.ts';
 import { Plus, Edit, Trash2 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Modal from '../../components/ui/Modal.tsx';
 
 
 interface ErrorCodesProps {

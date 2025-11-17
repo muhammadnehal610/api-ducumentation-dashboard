@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Briefcase, ChevronRight, Plus, Edit, Trash2, Search, ChevronLeft } from 'lucide-react';
-import { services as initialServices } from '@/constants/dummyData';
-import { User } from '@/types';
-import Modal from '@/components/ui/Modal';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import { services as initialServices } from '../../constants/dummyData.ts';
+import { User } from '../../types.ts';
+import Modal from '../../components/ui/Modal.tsx';
 
 interface ModulesProps {
   onSelectModule: (moduleName: string) => void;

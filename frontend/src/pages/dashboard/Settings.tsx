@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import Card from '@/components/ui/Card';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import Card from '../../components/ui/Card.tsx';
 import { Eye, EyeOff } from 'lucide-react';
-import { User } from '@/types';
+import { User } from '../../types.ts';
 
 interface SettingsProps {
     user: User;

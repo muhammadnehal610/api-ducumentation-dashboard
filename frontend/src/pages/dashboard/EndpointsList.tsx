@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Lock, Unlock, Plus, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { endpoints as initialEndpoints } from '@/constants/dummyData';
-import { HttpMethod, User, Endpoint } from '@/types';
-import Badge from '@/components/ui/Badge';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import { endpoints as initialEndpoints } from '../../constants/dummyData.ts';
+import { HttpMethod, User, Endpoint } from '../../types.ts';
+import Badge from '../../components/ui/Badge.tsx';
 
 interface EndpointsListProps {
   onSelectEndpoint: (endpointId: string) => void;

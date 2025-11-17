@@ -1,6 +1,6 @@
 // Fix: Use direct Express Request and Response types to avoid conflicts.
 /// <reference path="../../types.ts" />
-import { Request, Response, NextFunction } from 'express';
+import { RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
 import { User as UserType, UserRole } from '../../types';
@@ -15,7 +15,7 @@ declare global {
 }
 
 // Protect routes
-export const protect = async (req: Request, res: Response, next: NextFunction) => {
+export const protect: RequestHandler = async (req, res, next) => {
     let token;
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -46,8 +46,8 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
 };
 
 // Grant access to specific roles
-export const authorize = (...roles: UserRole[]) => {
-    return (req: Request, res: Response, next: NextFunction) => {
+export const authorize = (...roles: UserRole[]): RequestHandler => {
+    return (req, res, next) => {
         if (!req.user || !roles.includes(req.user.role)) {
             return res.status(403).json({ success: false, message: `User role '${req.user?.role}' is not authorized to access this route` });
         }

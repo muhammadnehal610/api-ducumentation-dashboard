@@ -1,12 +1,30 @@
 {
-  "name": "api-docs-monorepo",
-  "version": "1.0.0",
+  "name": "api-documentation-dashboard",
   "private": true,
-  "description": "Root package for running frontend and backend concurrently.",
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "start": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "express": "^5.1.0",
+    "dotenv": "^17.2.3",
+    "cors": "^2.8.5",
+    "jsonwebtoken": "^9.0.2",
+    "vite": "^7.2.2",
+    "@vitejs/plugin-react": "^5.1.1",
+    "path": "^0.12.7",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "lucide-react": "^0.553.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
   }
 }

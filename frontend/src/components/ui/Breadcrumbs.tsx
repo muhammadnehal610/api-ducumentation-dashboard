@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
-import { Breadcrumb, Page } from '@/types';
+// FIX: Changed alias import to relative path with extension for module resolution.
+import { Breadcrumb, Page } from '../../types.ts';
 
 interface BreadcrumbsProps {
   items: Breadcrumb[];

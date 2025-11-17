@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { schemas as initialSchemas } from '@/constants/dummyData';
-import { User, Schema } from '@/types';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import { schemas as initialSchemas } from '../../constants/dummyData.ts';
+import { User, Schema } from '../../types.ts';
 import { Plus, Edit, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Modal from '../../components/ui/Modal.tsx';
 
 interface ModelsProps {
     user: User;

@@ -1,5 +1,6 @@
 import React from 'react';
-import { HttpMethod } from '@/types';
+// FIX: Changed alias import to relative path with extension for module resolution.
+import { HttpMethod } from '../../types.ts';
 
 interface BadgeProps {
   method: HttpMethod;

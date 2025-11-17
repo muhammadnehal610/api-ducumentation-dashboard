@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Book } from 'lucide-react';
-import { User } from '@/types';
+// FIX: Changed alias import to relative path with extension for module resolution.
+import { User } from '../../types.ts';
 
 interface LoginPageProps {
   onLogin: (email: string, password: string) => Promise<void>;

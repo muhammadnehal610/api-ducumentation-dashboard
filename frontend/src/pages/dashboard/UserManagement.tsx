@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { User, UserRole } from '@/types';
-import Card from '@/components/ui/Card';
-import Switch from '@/components/ui/Switch';
-import Modal from '@/components/ui/Modal';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import { User, UserRole } from '../../types.ts';
+import Card from '../../components/ui/Card.tsx';
+import Switch from '../../components/ui/Switch.tsx';
+import Modal from '../../components/ui/Modal.tsx';
 import { Edit, Trash2, UserPlus } from 'lucide-react';
-import { apiClient } from '@/services/apiClient';
+import { apiClient } from '../../services/apiClient.ts';
 
 interface UserManagementProps {
     user: User;

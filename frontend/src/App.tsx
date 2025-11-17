@@ -1,24 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import LoginPage from '@/pages/auth/LoginPage';
-import RegisterPage from '@/pages/auth/RegisterPage';
-import Overview from '@/pages/dashboard/Overview';
-import EndpointsList from '@/pages/dashboard/EndpointsList';
-import EndpointDetail from '@/pages/dashboard/EndpointDetail';
-import EndpointCreateEdit from '@/pages/dashboard/EndpointCreateEdit';
-import ApiPlayground from '@/pages/dashboard/ApiPlayground';
-import Models from '@/pages/dashboard/Models';
-import Schemas from '@/pages/dashboard/Schemas';
-import AuthenticationInfo from '@/pages/dashboard/AuthenticationInfo';
-import Flows from '@/pages/dashboard/Flows';
-import ErrorCodes from '@/pages/dashboard/ErrorCodes';
-import Changelog from '@/pages/dashboard/Changelog';
-import Settings from '@/pages/dashboard/Settings';
-import Modules from '@/pages/dashboard/Modules';
-import UserManagement from '@/pages/dashboard/UserManagement';
-import { Page, AuthPage, User, Breadcrumb } from '@/types';
-import { endpoints } from '@/constants/dummyData';
-import { apiClient } from '@/services/apiClient';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import DashboardLayout from './components/layout/DashboardLayout.tsx';
+import LoginPage from './pages/auth/LoginPage.tsx';
+import RegisterPage from './pages/auth/RegisterPage.tsx';
+import Overview from './pages/dashboard/Overview.tsx';
+import EndpointsList from './pages/dashboard/EndpointsList.tsx';
+import EndpointDetail from './pages/dashboard/EndpointDetail.tsx';
+import EndpointCreateEdit from './pages/dashboard/EndpointCreateEdit.tsx';
+import ApiPlayground from './pages/dashboard/ApiPlayground.tsx';
+import Models from './pages/dashboard/Models.tsx';
+import Schemas from './pages/dashboard/Schemas.tsx';
+import AuthenticationInfo from './pages/dashboard/AuthenticationInfo.tsx';
+import Flows from './pages/dashboard/Flows.tsx';
+import ErrorCodes from './pages/dashboard/ErrorCodes.tsx';
+import Changelog from './pages/dashboard/Changelog.tsx';
+import Settings from './pages/dashboard/Settings.tsx';
+import Modules from './pages/dashboard/Modules.tsx';
+import UserManagement from './pages/dashboard/UserManagement.tsx';
+import { Page, AuthPage, User, Breadcrumb } from './types.ts';
+import { endpoints } from './constants/dummyData.ts';
+import { apiClient } from './services/apiClient.ts';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);

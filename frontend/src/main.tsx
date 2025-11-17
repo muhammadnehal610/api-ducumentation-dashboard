@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from '@/App';
+// FIX: Changed alias import to relative path with extension for module resolution.
+import App from './App.tsx';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

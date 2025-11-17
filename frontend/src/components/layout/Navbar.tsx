@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, Bell, Settings, User, LogOut, Menu } from 'lucide-react';
-import { User as UserType } from '@/types';
+// FIX: Changed alias import to relative path with extension for module resolution.
+import { User as UserType } from '../../types.ts';
 
 
 interface NavbarProps {

@@ -1,11 +1,12 @@
 import React from 'react';
 import { PlayCircle, Edit } from 'lucide-react';
-import { endpoints } from '@/constants/dummyData';
-import Badge from '@/components/ui/Badge';
-import ParamTable from '@/components/ui/ParamTable';
-import JsonViewer from '@/components/ui/JsonViewer';
-import { User, ResponseExample, Param } from '@/types';
-import Card from '@/components/ui/Card';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import { endpoints } from '../../constants/dummyData.ts';
+import Badge from '../../components/ui/Badge.tsx';
+import ParamTable from '../../components/ui/ParamTable.tsx';
+import JsonViewer from '../../components/ui/JsonViewer.tsx';
+import { User, ResponseExample, Param } from '../../types.ts';
+import Card from '../../components/ui/Card.tsx';
 
 interface EndpointDetailProps {
   endpointId: string;

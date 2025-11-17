@@ -1,4 +1,4 @@
-/// <reference types="vite/client" />
+// FIX: Removed reference to vite/client to resolve type definition error.
 
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL: string;

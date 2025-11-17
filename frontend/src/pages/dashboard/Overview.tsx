@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Copy, Server, Lock, GitMerge, Edit, Trash2, Plus, Info } from 'lucide-react';
-import Card from '@/components/ui/Card';
-import { User } from '@/types';
-import Modal from '@/components/ui/Modal';
+// FIX: Changed alias imports to relative paths with extensions for module resolution.
+import Card from '../../components/ui/Card.tsx';
+import { User } from '../../types.ts';
+import Modal from '../../components/ui/Modal.tsx';
 
 interface OverviewCardData {
   id: number;
