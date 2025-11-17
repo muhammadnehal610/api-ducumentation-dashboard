@@ -1,4 +1,5 @@
-import { RequestHandler } from 'express';
+
+import * as express from 'express';
 import Service from '../models/Service';
 import Module from '../models/Module';
 import Endpoint from '../models/Endpoint';
@@ -10,7 +11,7 @@ import OverviewCard from '../models/OverviewCard';
 // @desc    Get all services
 // @route   GET /api/services
 // @access  Public
-export const getServices: RequestHandler = async (req, res, next) => {
+export const getServices: express.RequestHandler = async (req, res, next) => {
     try {
         const services = await Service.find({}).sort({ name: 1 });
         res.status(200).json({ success: true, count: services.length, data: services });
@@ -22,7 +23,7 @@ export const getServices: RequestHandler = async (req, res, next) => {
 // @desc    Create a service
 // @route   POST /api/services
 // @access  Private/Admin
-export const createService: RequestHandler = async (req, res, next) => {
+export const createService: express.RequestHandler = async (req, res, next) => {
     try {
         const { name } = req.body;
         const existingService = await Service.findOne({ name });
@@ -39,7 +40,7 @@ export const createService: RequestHandler = async (req, res, next) => {
 // @desc    Update a service
 // @route   PUT /api/services/:id
 // @access  Private/Admin
-export const updateService: RequestHandler = async (req, res, next) => {
+export const updateService: express.RequestHandler = async (req, res, next) => {
     try {
         const { name } = req.body;
         
@@ -64,7 +65,7 @@ export const updateService: RequestHandler = async (req, res, next) => {
 // @desc    Delete a service and all related data
 // @route   DELETE /api/services/:id
 // @access  Private/Admin
-export const deleteService: RequestHandler = async (req, res, next) => {
+export const deleteService: express.RequestHandler = async (req, res, next) => {
     try {
         const serviceId = req.params.id;
         const service = await Service.findById(serviceId);

@@ -1,11 +1,12 @@
-import { RequestHandler } from 'express';
+
+import * as express from 'express';
 import Changelog from '../models/Changelog';
 
 // @desc    Get all changelog items
 // @route   GET /api/changelog
 // @access  Public
 // FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const getChangelogs: RequestHandler = async (req, res, next) => {
+export const getChangelogs: express.RequestHandler = async (req, res, next) => {
     try {
         const changelogs = await Changelog.find({}).sort({ date: -1 });
         res.status(200).json({ success: true, count: changelogs.length, data: changelogs });
@@ -18,7 +19,7 @@ export const getChangelogs: RequestHandler = async (req, res, next) => {
 // @route   POST /api/changelog
 // @access  Private/Admin
 // FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const createChangelog: RequestHandler = async (req, res, next) => {
+export const createChangelog: express.RequestHandler = async (req, res, next) => {
     try {
         const changelog = await Changelog.create(req.body);
         res.status(201).json({ success: true, data: changelog });
@@ -31,7 +32,7 @@ export const createChangelog: RequestHandler = async (req, res, next) => {
 // @route   PUT /api/changelog/:id
 // @access  Private/Admin
 // FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const updateChangelog: RequestHandler = async (req, res, next) => {
+export const updateChangelog: express.RequestHandler = async (req, res, next) => {
     try {
         const changelog = await Changelog.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
@@ -50,7 +51,7 @@ export const updateChangelog: RequestHandler = async (req, res, next) => {
 // @route   DELETE /api/changelog/:id
 // @access  Private/Admin
 // FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const deleteChangelog: RequestHandler = async (req, res, next) => {
+export const deleteChangelog: express.RequestHandler = async (req, res, next) => {
     try {
         const changelog = await Changelog.findByIdAndDelete(req.params.id);
         if (!changelog) {

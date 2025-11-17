@@ -1,10 +1,11 @@
-import { RequestHandler } from 'express';
+
+import * as express from 'express';
 import OverviewCard from '../models/OverviewCard';
 
 // @desc    Get all overview cards for a service
 // @route   GET /api/overview-cards?serviceId=:serviceId
 // @access  Public
-export const getOverviewCards: RequestHandler = async (req, res, next) => {
+export const getOverviewCards: express.RequestHandler = async (req, res, next) => {
     try {
         const { serviceId } = req.query;
         if (!serviceId) {
@@ -20,7 +21,7 @@ export const getOverviewCards: RequestHandler = async (req, res, next) => {
 // @desc    Create an overview card
 // @route   POST /api/overview-cards
 // @access  Private/Admin
-export const createOverviewCard: RequestHandler = async (req, res, next) => {
+export const createOverviewCard: express.RequestHandler = async (req, res, next) => {
     try {
         if (!req.body.serviceId) {
             return res.status(400).json({ success: false, message: "Service ID is required to create a card." });
@@ -35,7 +36,7 @@ export const createOverviewCard: RequestHandler = async (req, res, next) => {
 // @desc    Update an overview card
 // @route   PUT /api/overview-cards/:id
 // @access  Private/Admin
-export const updateOverviewCard: RequestHandler = async (req, res, next) => {
+export const updateOverviewCard: express.RequestHandler = async (req, res, next) => {
     try {
         const card = await OverviewCard.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
@@ -53,7 +54,7 @@ export const updateOverviewCard: RequestHandler = async (req, res, next) => {
 // @desc    Delete an overview card
 // @route   DELETE /api/overview-cards/:id
 // @access  Private/Admin
-export const deleteOverviewCard: RequestHandler = async (req, res, next) => {
+export const deleteOverviewCard: express.RequestHandler = async (req, res, next) => {
     try {
         const card = await OverviewCard.findByIdAndDelete(req.params.id);
         if (!card) {

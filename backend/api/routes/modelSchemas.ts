@@ -1,6 +1,7 @@
 
 
-import { Router } from 'express';
+
+import * as express from 'express';
 import {
     getSchemas,
     getSchema,
@@ -13,7 +14,7 @@ import {
 } from '../controllers/modelSchemaController';
 import { protect, authorize } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
 // Base schema routes
 router.route('/')

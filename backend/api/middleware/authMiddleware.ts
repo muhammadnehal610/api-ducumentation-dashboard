@@ -1,7 +1,8 @@
 
+
 // Fix: Use direct Express Request and Response types to avoid conflicts.
 // FIX: Use named import for RequestHandler to ensure type compatibility.
-import { RequestHandler } from 'express';
+import * as express from 'express';
 // FIX: Use namespace import for jwt to fix type overload issues.
 import * as jwt from 'jsonwebtoken';
 import User from '../models/User';
@@ -28,7 +29,7 @@ declare global {
 
 // Protect routes
 // FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const protect: RequestHandler = async (req, res, next) => {
+export const protect: express.RequestHandler = async (req, res, next) => {
     let token;
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -61,7 +62,7 @@ export const protect: RequestHandler = async (req, res, next) => {
 
 // Grant access to specific roles
 // FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const authorize = (...roles: UserRole[]): RequestHandler => {
+export const authorize = (...roles: UserRole[]): express.RequestHandler => {
     return (req, res, next) => {
         if (!req.user || !roles.includes(req.user.role)) {
             return res.status(403).json({ success: false, message: `User role '${req.user?.role}' is not authorized to access this route` });

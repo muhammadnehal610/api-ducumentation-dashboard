@@ -1,6 +1,7 @@
 
 
-import { Router } from 'express';
+
+import * as express from 'express';
 import {
     getEndpoints,
     getEndpoint,
@@ -10,7 +11,7 @@ import {
 } from '../controllers/endpointController';
 import { protect, authorize } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
 router.route('/')
     .get(getEndpoints)

@@ -1,6 +1,7 @@
 
 
-import { Router } from 'express';
+
+import * as express from 'express';
 import {
     getOverviewCards,
     createOverviewCard,
@@ -9,7 +10,7 @@ import {
 } from '../controllers/overviewCardController';
 import { protect, authorize } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
 router.route('/')
     .get(getOverviewCards)

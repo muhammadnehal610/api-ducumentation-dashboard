@@ -1,11 +1,12 @@
 
+
 // Fix: Use direct Express Request and Response types to avoid conflicts.
-import { RequestHandler } from 'express';
+import * as express from 'express';
 import User from '../models/User';
 
 // Create User (by Admin)
 // FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const createUser: RequestHandler = async (req, res, next) => {
+export const createUser: express.RequestHandler = async (req, res, next) => {
     const { name, email, password, role, status } = req.body;
      try {
         if (!name || !email || !password || !role) {
@@ -35,7 +36,7 @@ export const createUser: RequestHandler = async (req, res, next) => {
 
 // Read Users with Search and Pagination
 // FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const getUsers: RequestHandler = async (req, res, next) => {
+export const getUsers: express.RequestHandler = async (req, res, next) => {
     try {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
@@ -81,7 +82,7 @@ export const getUsers: RequestHandler = async (req, res, next) => {
 
 // Update User
 // FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const updateUser: RequestHandler = async (req, res, next) => {
+export const updateUser: express.RequestHandler = async (req, res, next) => {
     const { id } = req.params;
     // Don't allow password to be updated through this route
     const { password, ...updateData } = req.body;
@@ -103,7 +104,7 @@ export const updateUser: RequestHandler = async (req, res, next) => {
 
 // Delete User
 // FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
-export const deleteUser: RequestHandler = async (req, res, next) => {
+export const deleteUser: express.RequestHandler = async (req, res, next) => {
      const { id } = req.params;
     try {
         const deletedUser = await User.findByIdAndDelete(id);

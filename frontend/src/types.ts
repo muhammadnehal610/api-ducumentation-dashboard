@@ -1,3 +1,4 @@
+
 export type UserRole = 'frontend' | 'backend';
 
 export interface User {

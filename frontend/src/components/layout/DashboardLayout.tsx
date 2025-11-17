@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Sidebar from './Sidebar.tsx';
 import Navbar from './Navbar.tsx';
@@ -13,9 +14,10 @@ interface DashboardLayoutProps {
   onNavigate: (page: Page, breadcrumbs?: Breadcrumb[]) => void;
   service: Service;
   onSwitchService: () => void;
+  onManageService: (action: { action: 'rename' | 'delete', service: Service }) => void;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user, onLogout, breadcrumbs, onNavigate, service, onSwitchService }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user, onLogout, breadcrumbs, onNavigate, service, onSwitchService, onManageService }) => {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
 
   return (
@@ -33,6 +35,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user, onLog
             user={user}
             service={service}
             onSwitchService={onSwitchService}
+            onManageService={onManageService}
         />
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <Breadcrumbs items={breadcrumbs} onNavigate={onNavigate} />

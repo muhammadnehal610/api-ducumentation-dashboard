@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from './components/layout/DashboardLayout.tsx';
 import LoginPage from './pages/auth/LoginPage.tsx';
 import RegisterPage from './pages/auth/RegisterPage.tsx';
-import ServiceSelector from './pages/ServiceSelector.tsx';
+import ServiceListPage from './pages/ServiceListPage.tsx';
 import Overview from './pages/dashboard/Overview.tsx';
 import EndpointsList from './pages/dashboard/EndpointsList.tsx';
 import EndpointDetail from './pages/dashboard/EndpointDetail.tsx';
@@ -19,8 +19,15 @@ import Changelog from './pages/dashboard/Changelog.tsx';
 import Settings from './pages/dashboard/Settings.tsx';
 import Modules from './pages/dashboard/Modules.tsx';
 import UserManagement from './pages/dashboard/UserManagement.tsx';
+import ServiceFormModal from './components/modals/ServiceFormModal.tsx';
+import DeleteServiceModal from './components/modals/DeleteServiceModal.tsx';
 import { Page, AuthPage, User, Breadcrumb, Service } from './types.ts';
 import { apiClient } from './services/apiClient.ts';
+
+type ServiceManagementAction = {
+    action: 'rename' | 'delete';
+    service: Service;
+}
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -34,6 +41,8 @@ const App: React.FC = () => {
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const [selectedModelName, setSelectedModelName] = useState<string | null>(null);
+  
+  const [serviceToManage, setServiceToManage] = useState<ServiceManagementAction | null>(null);
 
   useEffect(() => {
     // Theme initialization
@@ -71,7 +80,33 @@ const App: React.FC = () => {
   const handleSwitchService = () => {
     setSelectedService(null);
     localStorage.removeItem('selectedService');
+    handleNavigate('Overview');
   };
+  
+  const handleRenameService = async (serviceData: { name: string, description: string }) => {
+    if (!serviceToManage) return;
+    try {
+        const updatedService = await apiClient<Service>(`/services/${serviceToManage.service.id}`, { method: 'PUT', body: serviceData });
+        setSelectedService(updatedService);
+        localStorage.setItem('selectedService', JSON.stringify(updatedService));
+        setServiceToManage(null);
+        alert("Service renamed successfully.");
+    } catch(err: any) {
+        alert(`Failed to rename service: ${err.message}`);
+    }
+  }
+
+  const handleDeleteService = async () => {
+    if (!serviceToManage) return;
+    try {
+        await apiClient(`/services/${serviceToManage.service.id}`, { method: 'DELETE' });
+        setServiceToManage(null);
+        handleSwitchService(); // Go back to selector
+        alert("Service deleted successfully.");
+    } catch(err: any) {
+        alert(`Failed to delete service: ${err.message}`);
+    }
+  }
 
   const handleNavigate = useCallback((newPage: Page, newBreadcrumbs?: Breadcrumb[]) => {
     setPage(newPage);
@@ -241,20 +276,40 @@ const App: React.FC = () => {
   }
 
   if (!selectedService) {
-    return <ServiceSelector onSelectService={handleSelectService} user={currentUser} />;
+    return <ServiceListPage onSelectService={handleSelectService} user={currentUser} />;
   }
 
   return (
-    <DashboardLayout 
-      user={currentUser}
-      onLogout={handleLogout}
-      breadcrumbs={breadcrumbs}
-      onNavigate={handleNavigate}
-      service={selectedService}
-      onSwitchService={handleSwitchService}
-    >
-      {renderContent()}
-    </DashboardLayout>
+    <>
+      <DashboardLayout 
+        user={currentUser}
+        onLogout={handleLogout}
+        breadcrumbs={breadcrumbs}
+        onNavigate={handleNavigate}
+        service={selectedService}
+        onSwitchService={handleSwitchService}
+        onManageService={setServiceToManage}
+      >
+        {renderContent()}
+      </DashboardLayout>
+
+      {serviceToManage?.action === 'rename' && (
+        <ServiceFormModal
+            isOpen={true}
+            onClose={() => setServiceToManage(null)}
+            onSave={handleRenameService}
+            service={serviceToManage.service}
+        />
+      )}
+       {serviceToManage?.action === 'delete' && (
+        <DeleteServiceModal
+            isOpen={true}
+            onClose={() => setServiceToManage(null)}
+            onConfirm={handleDeleteService}
+            service={serviceToManage.service}
+        />
+      )}
+    </>
   );
 };
 

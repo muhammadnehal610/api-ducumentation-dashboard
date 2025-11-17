@@ -1,6 +1,7 @@
 
 
-import { Router } from 'express';
+
+import * as express from 'express';
 import {
     getErrorCodes,
     createErrorCode,
@@ -9,7 +10,7 @@ import {
 } from '../controllers/errorCodeController';
 import { protect, authorize } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
 router.route('/')
     .get(getErrorCodes)

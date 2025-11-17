@@ -1,6 +1,7 @@
 
 
-import { Router } from 'express';
+
+import * as express from 'express';
 import {
     createUser,
     getUsers,
@@ -9,7 +10,7 @@ import {
 } from '../controllers/userController';
 import { protect, authorize } from '../middleware/authMiddleware';
 
-const router = Router();
+const router = express.Router();
 
 // All routes below are protected and restricted to 'backend' role
 router.use(protect);
