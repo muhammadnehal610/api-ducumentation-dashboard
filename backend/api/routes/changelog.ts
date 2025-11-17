@@ -1,4 +1,5 @@
-import express from 'express';
+
+import { Router } from 'express';
 import {
     getChangelogs,
     createChangelog,
@@ -7,7 +8,7 @@ import {
 } from '../controllers/changelogController';
 import { protect, authorize } from '../middleware/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
 router.route('/')
     .get(getChangelogs)

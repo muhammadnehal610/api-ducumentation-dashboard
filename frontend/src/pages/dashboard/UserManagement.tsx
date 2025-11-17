@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 // FIX: Changed alias imports to relative paths with extensions for module resolution.
 import { User, UserRole } from '../../types.ts';
 import Card from '../../components/ui/Card.tsx';
 import Switch from '../../components/ui/Switch.tsx';
 import Modal from '../../components/ui/Modal.tsx';
-import { Edit, Trash2, UserPlus } from 'lucide-react';
+import { Edit, Trash2, UserPlus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiClient } from '../../services/apiClient.ts';
 
 interface UserManagementProps {
@@ -18,25 +19,62 @@ const UserManagement: React.FC<UserManagementProps> = ({ user: currentUser }) =>
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
+  // State for search and pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [limit] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+  // Debounce search term
+  useEffect(() => {
+    const handler = setTimeout(() => {
+        setDebouncedSearchTerm(searchTerm);
+        setCurrentPage(1); // Reset to page 1 on new search
+    }, 300);
+
+    return () => {
+        clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient<{ success: true; data: User[] }>('/users');
-      setUsers(response.data);
+        const params = new URLSearchParams({
+            page: currentPage.toString(),
+            limit: limit.toString(),
+            search: debouncedSearchTerm,
+        });
+
+      const response = await apiClient<{ 
+        success: true; 
+        data: {
+            users: User[];
+            totalUsers: number;
+            page: number;
+            totalPages: number;
+        } 
+    }>(`/users?${params.toString()}`);
+      
+      setUsers(response.data.users);
+      setTotalUsers(response.data.totalUsers);
+      setTotalPages(response.data.totalPages);
+      setCurrentPage(response.data.page);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch users.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentPage, limit, debouncedSearchTerm]);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
   const handleStatusOrRoleChange = async (userId: string, updateData: Partial<User>) => {
-    // Optimistic UI update
     const originalUsers = [...users];
     setUsers(users.map(user => user.id === userId ? { ...user, ...updateData } : user));
 
@@ -46,7 +84,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ user: currentUser }) =>
         body: updateData,
       });
     } catch (err) {
-      // Revert on failure
       setUsers(originalUsers);
       alert('Failed to update user.');
     }
@@ -65,18 +102,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ user: currentUser }) =>
   const handleSaveUser = async (userData: Partial<User>) => {
     try {
         if (editingUser) { // Update
-            await apiClient(`/users/${editingUser.id}`, {
-                method: 'PUT',
-                body: userData
-            });
+            await apiClient(`/users/${editingUser.id}`, { method: 'PUT', body: userData });
         } else { // Create
-            await apiClient('/users', {
-                method: 'POST',
-                body: userData
-            });
+            await apiClient('/users', { method: 'POST', body: userData });
         }
         handleCloseModal();
-        fetchUsers(); // Refresh data
+        fetchUsers();
     } catch (err: any) {
         alert(`Error saving user: ${err.message}`);
     }
@@ -90,27 +121,54 @@ const UserManagement: React.FC<UserManagementProps> = ({ user: currentUser }) =>
       if(window.confirm("Are you sure you want to delete this user?")){
           try {
             await apiClient(`/users/${userId}`, { method: 'DELETE' });
-            fetchUsers(); // Refresh data
+            fetchUsers();
           } catch (err: any) {
             alert(`Error deleting user: ${err.message}`);
           }
       }
   }
 
+  const Pagination = () => (
+    <div className="flex justify-between items-center mt-4 px-6 pb-4 text-sm">
+      <div>
+        <span className="text-gray-600 dark:text-gray-400">
+          Showing {Math.min((currentPage - 1) * limit + 1, totalUsers)} to {Math.min(currentPage * limit, totalUsers)} of {totalUsers} users
+        </span>
+      </div>
+      <div className="flex items-center space-x-1">
+        <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1 || isLoading} className="p-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center"><ChevronLeft size={16} className="mr-1"/> Previous</button>
+        <span className="px-2 font-medium">Page {currentPage} of {totalPages}</span>
+        <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages || totalPages === 0 || isLoading} className="p-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center">Next <ChevronRight size={16} className="ml-1"/></button>
+      </div>
+    </div>
+  );
+
+
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-6">
         <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
             <p className="text-lg text-gray-600 dark:text-gray-400">Manage user roles and statuses.</p>
         </div>
-        <button onClick={() => handleOpenModal(null)} className="flex items-center bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg">
+        <button onClick={() => handleOpenModal(null)} className="flex items-center bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded-lg w-full sm:w-auto mt-4 sm:mt-0">
             <UserPlus size={18} className="mr-2" />
             Create User
         </button>
       </div>
       
       {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+      
+      <div className="mb-4 relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+      </div>
 
       <Card>
         <div className="overflow-x-auto">
@@ -164,7 +222,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ user: currentUser }) =>
               </tbody>
             </table>
           )}
+          {(!isLoading && users.length === 0) && (
+            <div className="text-center p-8 text-gray-500 dark:text-gray-400">
+                No users found matching your search.
+            </div>
+          )}
         </div>
+        {!isLoading && totalPages > 0 && <Pagination />}
       </Card>
       
       {isModalOpen && (
@@ -187,15 +251,23 @@ interface UserFormModalProps {
 }
 
 const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, user }) => {
-    const [name, setName] = useState(user?.name || '');
-    const [email, setEmail] = useState(user?.email || '');
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [role, setRole] = useState<UserRole>(user?.role || 'frontend');
+    const [role, setRole] = useState<UserRole>('frontend');
+
+    useEffect(() => {
+        if(isOpen){
+            setName(user?.name || '');
+            setEmail(user?.email || '');
+            setRole(user?.role || 'frontend');
+            setPassword('');
+        }
+    }, [user, isOpen]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const userData: Partial<User> = { name, email, role };
-        // Only include password if creating a new user or changing it
         if (!user || password) {
             userData.password = password;
         }

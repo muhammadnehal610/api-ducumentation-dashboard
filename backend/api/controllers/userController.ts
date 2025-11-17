@@ -33,17 +33,47 @@ export const createUser: RequestHandler = async (req, res, next) => {
     }
 };
 
-// Read Users
+// Read Users with Search and Pagination
 // FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const getUsers: RequestHandler = async (req, res, next) => {
     try {
-        // Build a filter object based on query params
-        const filters: any = {};
-        if (req.query.role) filters.role = req.query.role;
-        if (req.query.status) filters.status = req.query.status;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const search = req.query.search as string || '';
 
-        const users = await User.find(filters); // Password is already excluded by default
-        res.status(200).json({ success: true, count: users.length, data: users });
+        const skip = (page - 1) * limit;
+
+        // Build query for search
+        const query: any = {};
+        if (search) {
+            const searchRegex = new RegExp(search, 'i'); // Case-insensitive search
+            query.$or = [
+                { name: searchRegex },
+                { email: searchRegex }
+            ];
+        }
+
+        // Find users with pagination and sorting
+        const users = await User.find(query)
+            .sort({ createdAt: -1 }) // Sort by newest first
+            .skip(skip)
+            .limit(limit);
+
+        // Get total count of users matching the search query for pagination
+        const totalUsers = await User.countDocuments(query);
+        const totalPages = Math.ceil(totalUsers / limit);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                users,
+                totalUsers,
+                page,
+                limit,
+                totalPages,
+            }
+        });
+
     } catch (error) {
         next(error);
     }

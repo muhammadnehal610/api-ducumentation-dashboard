@@ -1,11 +1,12 @@
 
 
+
 import dotenv from 'dotenv';
 dotenv.config();
 
-// FIX: Change to default import to resolve type conflicts.
-// FIX: Added named imports for Request, Response, and ErrorRequestHandler to ensure correct type definitions are used.
-import express, { Request, Response, ErrorRequestHandler } from 'express';
+// FIX: Split express import to resolve type conflicts.
+import express from 'express';
+import { Request, Response, ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
