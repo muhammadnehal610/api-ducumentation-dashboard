@@ -1,0 +1,5 @@
+{
+  "name": "API Documentation Dashboard",
+  "description": "A role-based, dual-dashboard system for API documentation. Provides a view-only experience for frontend developers and full CRUD content management for backend developers, including user administration.",
+  "requestFramePermissions": []
+}
