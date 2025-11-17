@@ -1,4 +1,5 @@
 // Fix: Use direct Express Request and Response types to avoid conflicts.
+/// <reference path="../../types.ts" />
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';

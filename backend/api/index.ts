@@ -1,12 +1,12 @@
-// Fix: Use direct express types to avoid conflicts with global types.
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 
-// NOTE: In a real serverless environment, you might not call db.connect() here,
-// but ensure the connection is managed per-invocation or with a connection pool.
-// For this mock, we initialize the data once.
+// Initialize mock DB
 import './config/db';
 
 const app = express();
@@ -28,6 +28,17 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error(err.stack);
     res.status(500).json({ success: false, message: err.message || 'Something went wrong!' });
 });
+
+// Start the server for local development
+const PORT = process.env.PORT || 5001;
+// This check ensures we only run the server when running the file directly
+// and not when it's imported by a serverless function handler.
+if (process.env.NODE_ENV !== 'production' || require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+    });
+}
+
 
 // This is the exported handler for serverless environments like Vercel
 export default app;

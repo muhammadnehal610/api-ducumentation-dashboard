@@ -1,24 +1,12 @@
 {
-  "name": "api-docs-backend",
+  "name": "api-docs-monorepo",
   "version": "1.0.0",
-  "description": "Backend for API Documentation Dashboard",
-  "main": "api/index.ts",
+  "private": true,
+  "description": "Root package for running frontend and backend concurrently.",
   "scripts": {
-    "start": "node api/index.ts"
-  },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.0.3",
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.0"
+    "start": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.2",
-    "@types/cors": "^2.8.13",
-    "@types/express": "^4.17.17",
-    "@types/jsonwebtoken": "^9.0.1",
-    "@types/node": "^18.15.11",
-    "typescript": "^5.0.4"
+    "concurrently": "^8.2.2"
   }
 }
