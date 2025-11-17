@@ -14,9 +14,10 @@ interface ErrorCode {
 
 interface ErrorCodesProps {
     user: User;
+    serviceId: string;
 }
 
-const ErrorCodes: React.FC<ErrorCodesProps> = ({ user }) => {
+const ErrorCodes: React.FC<ErrorCodesProps> = ({ user, serviceId }) => {
     const [errorCodes, setErrorCodes] = useState<ErrorCode[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -24,17 +25,18 @@ const ErrorCodes: React.FC<ErrorCodesProps> = ({ user }) => {
     const [editingCode, setEditingCode] = useState<ErrorCode | null>(null);
 
     const fetchErrorCodes = useCallback(async () => {
+        if (!serviceId) return;
         setIsLoading(true);
         setError(null);
         try {
-            const response = await apiClient<{ data: ErrorCode[] }>('/error-codes');
+            const response = await apiClient<{ data: ErrorCode[] }>(`/error-codes?serviceId=${serviceId}`);
             setErrorCodes(response.data);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch error codes.');
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [serviceId]);
 
     useEffect(() => {
         fetchErrorCodes();
@@ -55,7 +57,7 @@ const ErrorCodes: React.FC<ErrorCodesProps> = ({ user }) => {
             if (editingCode) {
                 await apiClient(`/error-codes/${editingCode.id}`, { method: 'PUT', body: codeData });
             } else {
-                await apiClient('/error-codes', { method: 'POST', body: codeData });
+                await apiClient('/error-codes', { method: 'POST', body: { ...codeData, serviceId } });
             }
             fetchErrorCodes();
             handleCloseModal();
@@ -81,7 +83,7 @@ const ErrorCodes: React.FC<ErrorCodesProps> = ({ user }) => {
             <div>
                 <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">Error Codes</h1>
                 <p className="text-lg text-gray-600 dark:text-gray-400">
-                    A list of possible error codes and their meanings.
+                    A list of possible error codes and their meanings for this service.
                 </p>
             </div>
             {user.role === 'backend' && (

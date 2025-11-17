@@ -9,13 +9,26 @@ export interface User {
     status: 'active' | 'inactive';
 }
 
-export type Page = 'Overview' | 'Service Management' | 'Endpoints' | 'Endpoint Details' | 'Endpoint Form' | 'API Playground' | 'Schemas' | 'Models' | 'SchemaDetails' | 'Authentication' | 'Flows' | 'Error Codes' | 'Changelog' | 'Settings' | 'User Management';
+export type Page = 'Overview' | 'Modules' | 'Endpoints' | 'Endpoint Details' | 'Endpoint Form' | 'API Playground' | 'Schemas' | 'Models' | 'SchemaDetails' | 'Authentication' | 'Flows' | 'Error Codes' | 'Changelog' | 'Settings' | 'User Management';
 export type AuthPage = 'login' | 'register';
 
 export interface Breadcrumb {
     name: string;
     page: Page;
     params?: Record<string, any>;
+}
+
+export interface Service {
+    id: string;
+    name: string;
+    description?: string;
+}
+
+export interface Module {
+    id: string;
+    name: string;
+    description?: string;
+    serviceId: string;
 }
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -25,18 +38,15 @@ export interface Endpoint {
     method: HttpMethod;
     path: string;
     description: string;
-    module: string;
     authRequired: boolean;
+    serviceId: string;
+    moduleId: string;
     headers?: Param[];
     queryParams?: Param[];
     bodyParams?: Param[];
     bodyExample?: string; // JSON string example for the request body
     successResponses?: ResponseExample[];
     errorResponses?: ResponseExample[];
-    // Deprecated fields, kept for compatibility if needed during transition
-    successResponse?: Record<string, any>;
-    errorResponse?: Record<string, any>;
-    statusCodes?: StatusCode[];
 }
 
 export interface Param {
@@ -64,7 +74,7 @@ export interface Schema {
     id: string;
     name: string;
     description?: string;
-    module: string;
+    serviceId: string;
     fields: SchemaField[];
 }
 

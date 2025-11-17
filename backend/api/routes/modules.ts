@@ -1,5 +1,5 @@
 
-import express from 'express';
+import { Router } from 'express';
 import {
     getModules,
     createModule,
@@ -8,10 +8,10 @@ import {
 } from '../controllers/moduleController';
 import { protect, authorize } from '../middleware/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
 router.route('/')
-    .get(getModules)
+    .get(getModules) // Publicly accessible to list modules for a service
     .post(protect, authorize('backend'), createModule);
 
 router.route('/:id')

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
 // FIX: Changed alias imports to relative paths with extensions for module resolution.
-import { Page, User, Param, HttpMethod, ResponseExample, Endpoint } from '../../types.ts';
+import { Page, User, Param, HttpMethod, ResponseExample, Endpoint, Module } from '../../types.ts';
 import Card from '../../components/ui/Card.tsx';
 import Switch from '../../components/ui/Switch.tsx';
 import JsonEditor from '../../components/ui/JsonEditor.tsx';
@@ -131,14 +131,15 @@ interface EndpointCreateEditProps {
   endpointId: string | null;
   onNavigate: (page: Page) => void;
   user: User;
+  serviceId: string;
 }
 
-const EndpointCreateEdit: React.FC<EndpointCreateEditProps> = ({ endpointId, onNavigate }) => {
+const EndpointCreateEdit: React.FC<EndpointCreateEditProps> = ({ endpointId, onNavigate, serviceId }) => {
   const [method, setMethod] = useState<HttpMethod>('GET');
   const [path, setPath] = useState('');
   const [description, setDescription] = useState('');
-  const [module, setModule] = useState('');
-  const [modules, setModules] = useState<string[]>([]);
+  const [moduleId, setModuleId] = useState('');
+  const [modules, setModules] = useState<Module[]>([]);
   const [authRequired, setAuthRequired] = useState(false);
 
   const [headers, setHeaders] = useState<FormParam[]>([]);
@@ -156,7 +157,7 @@ const EndpointCreateEdit: React.FC<EndpointCreateEditProps> = ({ endpointId, onN
     setMethod(endpoint.method);
     setPath(endpoint.path);
     setDescription(endpoint.description);
-    setModule(endpoint.module);
+    setModuleId(endpoint.moduleId);
     setAuthRequired(endpoint.authRequired);
     setBodyExample(endpoint.bodyExample || '{}');
 
@@ -187,16 +188,15 @@ const EndpointCreateEdit: React.FC<EndpointCreateEditProps> = ({ endpointId, onN
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const moduleRes = await apiClient<{ data: { name: string }[] }>('/modules');
-            const moduleNames = moduleRes.data.map(m => m.name);
-            setModules(moduleNames);
+            const moduleRes = await apiClient<{ data: Module[] }>(`/modules?serviceId=${serviceId}`);
+            setModules(moduleRes.data);
 
             if (endpointId) {
                 const endpointRes = await apiClient<{ data: Endpoint }>(`/endpoints/${endpointId}`);
                 populateForm(endpointRes.data);
             } else {
-                 if (moduleNames.length > 0) {
-                    setModule(moduleNames[0]);
+                 if (moduleRes.data.length > 0) {
+                    setModuleId(moduleRes.data[0].id);
                 }
             }
         } catch (err: any) {
@@ -206,7 +206,7 @@ const EndpointCreateEdit: React.FC<EndpointCreateEditProps> = ({ endpointId, onN
         }
     };
     fetchData();
-  }, [endpointId, populateForm]);
+  }, [endpointId, populateForm, serviceId]);
   
   const handleSave = async () => {
     setError('');
@@ -229,7 +229,7 @@ const EndpointCreateEdit: React.FC<EndpointCreateEditProps> = ({ endpointId, onN
     
     try {
         const payload = {
-            method, path, description, module, authRequired, bodyExample,
+            method, path, description, moduleId, authRequired, bodyExample, serviceId,
             headers: transformFormState(headers),
             queryParams: transformFormState(queryParams),
             bodyParams: transformFormState(bodyParams),
@@ -302,8 +302,8 @@ const EndpointCreateEdit: React.FC<EndpointCreateEditProps> = ({ endpointId, onN
               </div>
               <div>
                   <label className="block text-sm font-medium mb-1">Module</label>
-                  <select value={module} onChange={e => setModule(e.target.value)} className="w-full p-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md">
-                      {modules.map(s => <option key={s}>{s}</option>)}
+                  <select value={moduleId} onChange={e => setModuleId(e.target.value)} className="w-full p-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md">
+                      {modules.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                   </select>
               </div>
               <div className="flex items-center space-x-2 pt-5">

@@ -7,12 +7,13 @@ import { apiClient } from '../../services/apiClient.ts';
 
 interface ModelsProps {
     user: User;
+    serviceId: string;
     onSelectModel: (modelId: string, modelName: string) => void;
 }
 
 const ITEMS_PER_PAGE = 10;
 
-const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
+const Models: React.FC<ModelsProps> = ({ user, serviceId, onSelectModel }) => {
     const [schemas, setSchemas] = useState<Schema[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -23,17 +24,18 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
     const isBackend = user.role === 'backend';
 
     const fetchSchemas = useCallback(async () => {
+        if (!serviceId) return;
         setIsLoading(true);
         setError(null);
         try {
-            const response = await apiClient<{ data: Schema[] }>('/schemas');
+            const response = await apiClient<{ data: Schema[] }>(`/schemas?serviceId=${serviceId}`);
             setSchemas(response.data);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch schemas.');
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [serviceId]);
 
     useEffect(() => {
         fetchSchemas();
@@ -55,12 +57,12 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
         setEditingSchema(null);
     };
 
-    const handleSave = async (schemaData: { name: string, description?: string, module: string }) => {
+    const handleSave = async (schemaData: { name: string, description?: string }) => {
         try {
             if (editingSchema) {
                 await apiClient(`/schemas/${editingSchema.id}`, { method: 'PUT', body: schemaData });
             } else {
-                await apiClient('/schemas', { method: 'POST', body: { ...schemaData, fields: [] } });
+                await apiClient('/schemas', { method: 'POST', body: { ...schemaData, fields: [], serviceId } });
             }
             fetchSchemas();
             handleCloseModal();
@@ -124,7 +126,6 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
                             <tr>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Model Name</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Service</th>
                                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -133,7 +134,6 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
                                 <tr key={schema.id}>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{schema.name}</td>
                                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{schema.description}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{schema.module}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button onClick={() => onSelectModel(schema.id, schema.name)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mr-4 inline-flex items-center"><Eye size={16} className="mr-1"/> View Schema</button>
                                         {isBackend && (
@@ -166,44 +166,24 @@ const Models: React.FC<ModelsProps> = ({ user, onSelectModel }) => {
 interface ModelFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: { name: string, description?: string, module: string }) => void;
+    onSave: (data: { name: string, description?: string }) => void;
     editingSchema: Schema | null;
 }
 
 const ModelFormModal: React.FC<ModelFormModalProps> = ({ isOpen, onClose, onSave, editingSchema }) => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const [module, setModule] = useState('');
-    const [modules, setModules] = useState<{name: string}[]>([]);
-
-    useEffect(() => {
-        const fetchModules = async () => {
-            if (isOpen) {
-                try {
-                    const res = await apiClient<{ data: {name: string}[] }>('/modules');
-                    setModules(res.data);
-                    if (res.data.length > 0) {
-                        setModule(editingSchema?.module || res.data[0].name);
-                    }
-                } catch (error) {
-                    console.error("Failed to fetch modules for modal");
-                }
-            }
-        };
-        fetchModules();
-    }, [isOpen, editingSchema]);
 
     React.useEffect(() => {
         if (isOpen) {
             setName(editingSchema?.name || '');
             setDescription(editingSchema?.description || '');
-            setModule(editingSchema?.module || (modules.length > 0 ? modules[0].name : ''));
         }
-    }, [isOpen, editingSchema, modules]);
+    }, [isOpen, editingSchema]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({ name, description, module });
+        onSave({ name, description });
     };
 
     return (
@@ -212,12 +192,6 @@ const ModelFormModal: React.FC<ModelFormModalProps> = ({ isOpen, onClose, onSave
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Model Name</label>
                     <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g., User" className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md" required />
-                </div>
-                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Service / Module</label>
-                    <select value={module} onChange={e => setModule(e.target.value)} className="w-full mt-1 p-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md" required>
-                       {modules.map(m => <option key={m.name} value={m.name}>{m.name}</option>)}
-                    </select>
                 </div>
                  <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>

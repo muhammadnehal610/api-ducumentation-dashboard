@@ -1,13 +1,16 @@
 import { RequestHandler } from 'express';
 import Endpoint from '../models/Endpoint';
 
-// @desc    Get all endpoints
-// @route   GET /api/endpoints
+// @desc    Get all endpoints for a service
+// @route   GET /api/endpoints?serviceId=:serviceId
 // @access  Public
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const getEndpoints: RequestHandler = async (req, res, next) => {
     try {
-        const endpoints = await Endpoint.find({});
+        const { serviceId } = req.query;
+        if (!serviceId) {
+            return res.status(400).json({ success: false, message: "Service ID is required." });
+        }
+        const endpoints = await Endpoint.find({ serviceId });
         res.status(200).json({ success: true, count: endpoints.length, data: endpoints });
     } catch (error) {
         next(error);
@@ -17,7 +20,6 @@ export const getEndpoints: RequestHandler = async (req, res, next) => {
 // @desc    Get single endpoint
 // @route   GET /api/endpoints/:id
 // @access  Public
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const getEndpoint: RequestHandler = async (req, res, next) => {
     try {
         const endpoint = await Endpoint.findById(req.params.id);
@@ -33,9 +35,11 @@ export const getEndpoint: RequestHandler = async (req, res, next) => {
 // @desc    Create an endpoint
 // @route   POST /api/endpoints
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const createEndpoint: RequestHandler = async (req, res, next) => {
     try {
+        if (!req.body.serviceId) {
+            return res.status(400).json({ success: false, message: "Service ID is required to create an endpoint." });
+        }
         const endpoint = await Endpoint.create(req.body);
         res.status(201).json({ success: true, data: endpoint });
     } catch (error) {
@@ -46,7 +50,6 @@ export const createEndpoint: RequestHandler = async (req, res, next) => {
 // @desc    Update an endpoint
 // @route   PUT /api/endpoints/:id
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const updateEndpoint: RequestHandler = async (req, res, next) => {
     try {
         const endpoint = await Endpoint.findByIdAndUpdate(req.params.id, req.body, {
@@ -65,7 +68,6 @@ export const updateEndpoint: RequestHandler = async (req, res, next) => {
 // @desc    Delete an endpoint
 // @route   DELETE /api/endpoints/:id
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const deleteEndpoint: RequestHandler = async (req, res, next) => {
     try {
         const endpoint = await Endpoint.findByIdAndDelete(req.params.id);

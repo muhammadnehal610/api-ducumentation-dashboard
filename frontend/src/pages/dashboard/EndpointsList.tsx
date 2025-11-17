@@ -9,14 +9,15 @@ interface EndpointsListProps {
   onSelectEndpoint: (endpointId: string, endpointPath: string) => void;
   onCreateEndpoint: () => void;
   onEditEndpoint: (endpointId: string) => void;
-  selectedService: string | null;
+  selectedModule: string | null;
   user: User;
+  serviceId: string;
 }
 
 const methodFilters: HttpMethod[] = ['GET', 'POST', 'PUT', 'DELETE'];
 const ITEMS_PER_PAGE = 10;
 
-const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreateEndpoint, onEditEndpoint, selectedService, user }) => {
+const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreateEndpoint, onEditEndpoint, selectedModule, user, serviceId }) => {
   const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,17 +26,18 @@ const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreat
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchEndpoints = useCallback(async () => {
+    if (!serviceId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiClient<{ data: Endpoint[] }>('/endpoints');
+      const response = await apiClient<{ data: Endpoint[] }>(`/endpoints?serviceId=${serviceId}`);
       setEndpoints(response.data);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch endpoints.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [serviceId]);
 
   useEffect(() => {
     fetchEndpoints();
@@ -54,14 +56,16 @@ const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreat
   };
 
   const filteredEndpoints = useMemo(() => {
+    // This is now client-side filtering. Could be moved to backend for larger datasets.
     return endpoints.filter(endpoint => {
       const matchesSearch = endpoint.path.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             endpoint.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesFilter = activeFilters.size === 0 || activeFilters.has(endpoint.method);
-      const matchesService = !selectedService || selectedService === 'All Services' || endpoint.module === selectedService;
-      return matchesSearch && matchesFilter && matchesService;
+      // TODO: This relies on module name, should ideally be moduleId
+      // const matchesModule = !selectedModule || endpoint.module === selectedModule;
+      return matchesSearch && matchesFilter;
     });
-  }, [endpoints, searchTerm, activeFilters, selectedService]);
+  }, [endpoints, searchTerm, activeFilters, selectedModule]);
   
   const totalPages = Math.ceil(filteredEndpoints.length / ITEMS_PER_PAGE);
   const paginatedEndpoints = useMemo(() => {
@@ -102,7 +106,7 @@ const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreat
         <div>
             <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">Endpoints</h1>
             <p className="text-lg text-gray-600 dark:text-gray-400">
-                {selectedService && selectedService !== 'All Services' ? `Endpoints for ${selectedService}` : 'A list of all available API endpoints.'}
+                {selectedModule ? `Endpoints for ${selectedModule}` : 'A list of all available API endpoints for this service.'}
             </p>
         </div>
         {user.role === 'backend' && (
@@ -146,7 +150,6 @@ const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreat
                 <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Endpoint</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Service</th>
                 <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Auth</th>
                 {user.role === 'backend' && <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>}
                 </tr>
@@ -161,7 +164,6 @@ const EndpointsList: React.FC<EndpointsListProps> = ({ onSelectEndpoint, onCreat
                     </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-sm truncate">{endpoint.description}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{endpoint.module}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                         {endpoint.authRequired ? <Lock size={16} className="text-yellow-500 inline-block"/> : <Unlock size={16} className="text-green-500 inline-block"/>}
                     </td>

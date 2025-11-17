@@ -6,6 +6,7 @@ interface IOverviewCard extends Document {
     icon: string;
     iconColor: string;
     isCode?: boolean;
+    serviceId: mongoose.Types.ObjectId;
 }
 
 const OverviewCardSchema: Schema<IOverviewCard> = new Schema({
@@ -13,7 +14,12 @@ const OverviewCardSchema: Schema<IOverviewCard> = new Schema({
     content: { type: String, required: true },
     icon: { type: String, required: true },
     iconColor: { type: String, required: true },
-    isCode: { type: Boolean, default: false }
+    isCode: { type: Boolean, default: false },
+    serviceId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Service',
+        required: true
+    }
 }, {
     timestamps: true,
     toJSON: {

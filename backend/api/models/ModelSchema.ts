@@ -11,7 +11,7 @@ interface ISchemaField extends Types.Subdocument {
 interface IModelSchema extends Document {
     name: string;
     description?: string;
-    module: string;
+    serviceId: mongoose.Types.ObjectId;
     // FIX: Correctly type `fields` as a Mongoose DocumentArray to expose subdocument array methods like `.id()`.
     fields: mongoose.Types.DocumentArray<ISchemaField>;
 }
@@ -28,13 +28,13 @@ const ModelSchemaSchema: Schema<IModelSchema> = new Schema({
     name: {
         type: String,
         required: true,
-        unique: true
     },
     description: {
         type: String
     },
-    module: {
-        type: String,
+    serviceId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Service',
         required: true
     },
     fields: [SchemaFieldSchema]
@@ -49,6 +49,9 @@ const ModelSchemaSchema: Schema<IModelSchema> = new Schema({
         }
     }
 });
+
+// Ensure schema name is unique within the scope of a service
+ModelSchemaSchema.index({ name: 1, serviceId: 1 }, { unique: true });
 
 const ModelSchema: Model<IModelSchema> = mongoose.model<IModelSchema>('ModelSchema', ModelSchemaSchema);
 

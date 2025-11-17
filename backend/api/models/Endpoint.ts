@@ -21,8 +21,9 @@ export interface IEndpoint extends Document {
     method: HttpMethod;
     path: string;
     description: string;
-    module: string;
     authRequired: boolean;
+    serviceId: mongoose.Types.ObjectId;
+    moduleId: mongoose.Types.ObjectId;
     headers?: IParam[];
     queryParams?: IParam[];
     bodyParams?: IParam[];
@@ -56,8 +57,17 @@ const EndpointSchema: Schema<IEndpoint> = new Schema({
     },
     path: { type: String, required: true },
     description: { type: String, required: true },
-    module: { type: String, required: true },
     authRequired: { type: Boolean, default: false },
+    serviceId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Service',
+        required: true
+    },
+    moduleId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Module',
+        required: true
+    },
     headers: { type: [ParamSchema], default: undefined },
     queryParams: { type: [ParamSchema], default: undefined },
     bodyParams: { type: [ParamSchema], default: undefined },

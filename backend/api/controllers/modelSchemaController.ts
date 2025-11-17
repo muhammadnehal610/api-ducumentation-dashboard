@@ -1,13 +1,16 @@
 import { RequestHandler } from 'express';
 import ModelSchema from '../models/ModelSchema';
 
-// @desc    Get all schemas
-// @route   GET /api/schemas
+// @desc    Get all schemas for a service
+// @route   GET /api/schemas?serviceId=:serviceId
 // @access  Public
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const getSchemas: RequestHandler = async (req, res, next) => {
     try {
-        const schemas = await ModelSchema.find({});
+        const { serviceId } = req.query;
+        if (!serviceId) {
+            return res.status(400).json({ success: false, message: "Service ID is required." });
+        }
+        const schemas = await ModelSchema.find({ serviceId });
         res.status(200).json({ success: true, count: schemas.length, data: schemas });
     } catch (error) {
         next(error);
@@ -17,7 +20,6 @@ export const getSchemas: RequestHandler = async (req, res, next) => {
 // @desc    Get single schema by ID
 // @route   GET /api/schemas/:id
 // @access  Public
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const getSchema: RequestHandler = async (req, res, next) => {
     try {
         const schema = await ModelSchema.findById(req.params.id);
@@ -33,9 +35,11 @@ export const getSchema: RequestHandler = async (req, res, next) => {
 // @desc    Create a schema
 // @route   POST /api/schemas
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const createSchema: RequestHandler = async (req, res, next) => {
     try {
+        if (!req.body.serviceId) {
+            return res.status(400).json({ success: false, message: "Service ID is required to create a schema." });
+        }
         const schema = await ModelSchema.create(req.body);
         res.status(201).json({ success: true, data: schema });
     } catch (error) {
@@ -46,7 +50,6 @@ export const createSchema: RequestHandler = async (req, res, next) => {
 // @desc    Update a schema
 // @route   PUT /api/schemas/:id
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const updateSchema: RequestHandler = async (req, res, next) => {
     try {
         // Exclude fields from this top-level update to prevent accidental overwrite
@@ -69,7 +72,6 @@ export const updateSchema: RequestHandler = async (req, res, next) => {
 // @desc    Delete a schema
 // @route   DELETE /api/schemas/:id
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const deleteSchema: RequestHandler = async (req, res, next) => {
     try {
         const schema = await ModelSchema.findByIdAndDelete(req.params.id);
@@ -88,7 +90,6 @@ export const deleteSchema: RequestHandler = async (req, res, next) => {
 // @desc    Add a field to a schema
 // @route   POST /api/schemas/:schemaId/fields
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const addSchemaField: RequestHandler = async (req, res, next) => {
     try {
         const schema = await ModelSchema.findById(req.params.schemaId);
@@ -106,7 +107,6 @@ export const addSchemaField: RequestHandler = async (req, res, next) => {
 // @desc    Update a field in a schema
 // @route   PUT /api/schemas/:schemaId/fields/:fieldId
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const updateSchemaField: RequestHandler = async (req, res, next) => {
     try {
         const schema = await ModelSchema.findById(req.params.schemaId);
@@ -131,7 +131,6 @@ export const updateSchemaField: RequestHandler = async (req, res, next) => {
 // @desc    Delete a field from a schema
 // @route   DELETE /api/schemas/:schemaId/fields/:fieldId
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const deleteSchemaField: RequestHandler = async (req, res, next) => {
     try {
         const schema = await ModelSchema.findById(req.params.schemaId);

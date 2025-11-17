@@ -21,9 +21,10 @@ const ICONS: { [key: string]: React.ElementType } = {
 
 interface OverviewProps {
   user: User;
+  serviceId: string;
 }
 
-const Overview: React.FC<OverviewProps> = ({ user }) => {
+const Overview: React.FC<OverviewProps> = ({ user, serviceId }) => {
   const [cards, setCards] = useState<OverviewCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,10 +34,11 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
   const isBackend = user.role === 'backend';
 
   const fetchCards = useCallback(async () => {
+    if (!serviceId) return;
     setIsLoading(true);
     setError(null);
     try {
-        const response = await apiClient<{ data: OverviewCardData[] }>('/overview-cards');
+        const response = await apiClient<{ data: OverviewCardData[] }>(`/overview-cards?serviceId=${serviceId}`);
         // A simple mapping from string names to component types
         const mappedData = response.data.map(card => ({...card, icon: card.icon || 'Info'}));
         setCards(mappedData);
@@ -45,7 +47,7 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
     } finally {
         setIsLoading(false);
     }
-  }, []);
+  }, [serviceId]);
 
   useEffect(() => {
     fetchCards();
@@ -66,7 +68,7 @@ const Overview: React.FC<OverviewProps> = ({ user }) => {
   }
 
   const handleSaveCard = async (formData: { title: string, content: string }) => {
-    const payload = { ...formData, icon: 'Info', iconColor: 'gray' }; // Default icon/color for new cards
+    const payload = { ...formData, icon: 'Info', iconColor: 'gray', serviceId }; // Default icon/color for new cards
     try {
         if (editingCard) {
             await apiClient(`/overview-cards/${editingCard.id}`, { method: 'PUT', body: formData });

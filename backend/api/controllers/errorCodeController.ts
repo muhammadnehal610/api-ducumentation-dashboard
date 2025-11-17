@@ -1,13 +1,16 @@
 import { RequestHandler } from 'express';
 import ErrorCode from '../models/ErrorCode';
 
-// @desc    Get all error codes
-// @route   GET /api/error-codes
+// @desc    Get all error codes for a service
+// @route   GET /api/error-codes?serviceId=:serviceId
 // @access  Public
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const getErrorCodes: RequestHandler = async (req, res, next) => {
     try {
-        const errorCodes = await ErrorCode.find({}).sort({ code: 1 });
+        const { serviceId } = req.query;
+        if (!serviceId) {
+            return res.status(400).json({ success: false, message: "Service ID is required." });
+        }
+        const errorCodes = await ErrorCode.find({ serviceId }).sort({ code: 1 });
         res.status(200).json({ success: true, count: errorCodes.length, data: errorCodes });
     } catch (error) {
         next(error);
@@ -17,9 +20,11 @@ export const getErrorCodes: RequestHandler = async (req, res, next) => {
 // @desc    Create an error code
 // @route   POST /api/error-codes
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const createErrorCode: RequestHandler = async (req, res, next) => {
     try {
+        if (!req.body.serviceId) {
+            return res.status(400).json({ success: false, message: "Service ID is required to create an error code." });
+        }
         const errorCode = await ErrorCode.create(req.body);
         res.status(201).json({ success: true, data: errorCode });
     } catch (error) {
@@ -30,7 +35,6 @@ export const createErrorCode: RequestHandler = async (req, res, next) => {
 // @desc    Update an error code
 // @route   PUT /api/error-codes/:id
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const updateErrorCode: RequestHandler = async (req, res, next) => {
     try {
         const errorCode = await ErrorCode.findByIdAndUpdate(req.params.id, req.body, {
@@ -49,7 +53,6 @@ export const updateErrorCode: RequestHandler = async (req, res, next) => {
 // @desc    Delete an error code
 // @route   DELETE /api/error-codes/:id
 // @access  Private/Admin
-// FIX: Standardized on using the named import for RequestHandler to ensure type compatibility.
 export const deleteErrorCode: RequestHandler = async (req, res, next) => {
     try {
         const errorCode = await ErrorCode.findByIdAndDelete(req.params.id);

@@ -4,13 +4,13 @@ interface IErrorCode extends Document {
     code: number;
     meaning: string;
     context: string;
+    serviceId: mongoose.Types.ObjectId;
 }
 
 const ErrorCodeSchema: Schema<IErrorCode> = new Schema({
     code: {
         type: Number,
         required: true,
-        unique: true
     },
     meaning: {
         type: String,
@@ -18,6 +18,11 @@ const ErrorCodeSchema: Schema<IErrorCode> = new Schema({
     },
     context: {
         type: String,
+        required: true
+    },
+    serviceId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Service',
         required: true
     }
 }, {
@@ -31,6 +36,9 @@ const ErrorCodeSchema: Schema<IErrorCode> = new Schema({
         }
     }
 });
+
+// Ensure code is unique within a service
+ErrorCodeSchema.index({ code: 1, serviceId: 1 }, { unique: true });
 
 const ErrorCode: Model<IErrorCode> = mongoose.model<IErrorCode>('ErrorCode', ErrorCodeSchema);
 

@@ -1,14 +1,16 @@
+
 // FIX: Add a reference to Node.js types to resolve type errors for `require` and `module`.
 /// <reference types="node" />
 import dotenv from 'dotenv';
 dotenv.config();
 
-// FIX: Use a single default import for express to resolve type conflicts.
-import express from 'express';
+// FIX: Use a single default import for express and named imports for types to resolve type conflicts.
+import express, { Request, Response, ErrorRequestHandler } from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
 import endpointRoutes from './routes/endpoints';
+import serviceRoutes from './routes/services';
 import moduleRoutes from './routes/modules';
 import schemaRoutes from './routes/modelSchemas';
 import errorCodeRoutes from './routes/errorCodes';
@@ -26,14 +28,15 @@ app.use(cors());
 app.use(express.json());
 
 // API Routes
-// FIX: Use explicit types from the express default import.
-app.get('/api', (req: express.Request, res: express.Response) => {
+// FIX: Use explicit types from the express import.
+app.get('/api', (req: Request, res: Response) => {
   res.send('API is running...');
 });
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/endpoints', endpointRoutes);
+app.use('/api/services', serviceRoutes);
 app.use('/api/modules', moduleRoutes);
 app.use('/api/schemas', schemaRoutes);
 app.use('/api/error-codes', errorCodeRoutes);
@@ -42,8 +45,8 @@ app.use('/api/overview-cards', overviewCardRoutes);
 
 
 // Simple Error Handler
-// FIX: Use explicit types from the express default import.
-const errorHandler: express.ErrorRequestHandler = (err, req, res, next) => {
+// FIX: Use explicit types from the express import.
+const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ success: false, message: err.message || 'Something went wrong!' });
 };

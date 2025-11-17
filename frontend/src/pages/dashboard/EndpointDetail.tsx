@@ -4,7 +4,7 @@ import { PlayCircle, Edit } from 'lucide-react';
 import Badge from '../../components/ui/Badge.tsx';
 import ParamTable from '../../components/ui/ParamTable.tsx';
 import JsonViewer from '../../components/ui/JsonViewer.tsx';
-import { User, ResponseExample, Endpoint } from '../../types.ts';
+import { User, ResponseExample, Endpoint, Module } from '../../types.ts';
 import Card from '../../components/ui/Card.tsx';
 import { apiClient } from '../../services/apiClient.ts';
 
@@ -44,6 +44,7 @@ const ResponseDisplay: React.FC<{ response: ResponseExample }> = ({ response }) 
 
 const EndpointDetail: React.FC<EndpointDetailProps> = ({ endpointId, onNavigateToPlayground, onEditEndpoint, user }) => {
   const [endpoint, setEndpoint] = useState<Endpoint | null>(null);
+  const [moduleName, setModuleName] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,7 +54,13 @@ const EndpointDetail: React.FC<EndpointDetailProps> = ({ endpointId, onNavigateT
       setError(null);
       try {
         const response = await apiClient<{ data: Endpoint }>(`/endpoints/${endpointId}`);
-        setEndpoint(response.data);
+        const endpointData = response.data;
+        setEndpoint(endpointData);
+        if (endpointData) {
+            const modulesRes = await apiClient<{ data: Module[] }>(`/modules?serviceId=${endpointData.serviceId}`);
+            const module = modulesRes.data.find(m => m.id === endpointData.moduleId);
+            setModuleName(module ? module.name : 'Unknown');
+        }
       } catch (err: any) {
         setError(err.message || 'Failed to fetch endpoint details.');
       } finally {
@@ -109,7 +116,7 @@ const EndpointDetail: React.FC<EndpointDetailProps> = ({ endpointId, onNavigateT
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
                 <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400">Module</h4>
-                <p className="text-gray-800 dark:text-gray-200">{endpoint.module}</p>
+                <p className="text-gray-800 dark:text-gray-200">{moduleName}</p>
             </div>
             <div>
                 <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400">Auth Required</h4>
