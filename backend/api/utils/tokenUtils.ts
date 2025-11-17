@@ -6,13 +6,11 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'your_refresh_t
 const REFRESH_TOKEN_EXPIRE = process.env.REFRESH_TOKEN_EXPIRE || '7d';
 
 export const generateToken = (id: string): string => {
-    // FIX: Explicitly typed options object to resolve jwt.sign overload ambiguity.
-    const options: jwt.SignOptions = { expiresIn: JWT_EXPIRE };
-    return jwt.sign({ id }, JWT_SECRET, options);
+    // FIX: Letting TypeScript infer the options type to resolve potential overload ambiguity.
+    return jwt.sign({ id }, JWT_SECRET, { expiresIn: JWT_EXPIRE });
 };
 
 export const generateRefreshToken = (id: string): string => {
-    // FIX: Explicitly typed options object to resolve jwt.sign overload ambiguity.
-    const options: jwt.SignOptions = { expiresIn: REFRESH_TOKEN_EXPIRE };
-    return jwt.sign({ id }, REFRESH_TOKEN_SECRET, options);
+    // FIX: Letting TypeScript infer the options type to resolve potential overload ambiguity.
+    return jwt.sign({ id }, REFRESH_TOKEN_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRE });
 };

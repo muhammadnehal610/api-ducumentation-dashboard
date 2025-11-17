@@ -1,10 +1,10 @@
 // Fix: Use direct Express Request and Response types to avoid conflicts.
-import { RequestHandler } from 'express';
+import express from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
 import { generateToken, generateRefreshToken } from '../utils/tokenUtils';
 
-export const signup: RequestHandler = async (req, res, next) => {
+export const signup: express.RequestHandler = async (req, res, next) => {
     const { name, email, password, role } = req.body;
 
     try {
@@ -12,30 +12,29 @@ export const signup: RequestHandler = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Please provide all required fields.' });
         }
 
-        const userExists = await User.findByEmail(email);
+        const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(409).json({ success: false, message: 'User with this email already exists.' });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
+        // Password hashing is handled by the pre-save hook in the model
         const newUser = await User.create({
             name,
             email,
-            password: hashedPassword,
+            password, // Pass plaintext password, model will hash it
             role,
             status: 'active'
         });
 
-        res.status(201).json({ success: true, message: 'User created successfully', data: { id: newUser.id, name: newUser.name } });
+        // The toJSON transform in the model will remove the password
+        res.status(201).json({ success: true, message: 'User created successfully', data: newUser });
 
     } catch (error) {
         next(error);
     }
 };
 
-export const signin: RequestHandler = async (req, res, next) => {
+export const signin: express.RequestHandler = async (req, res, next) => {
     const { email, password } = req.body;
 
     try {
@@ -43,7 +42,8 @@ export const signin: RequestHandler = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Please provide email and password.' });
         }
 
-        const user = await User.findByEmail(email);
+        // Explicitly select the password field which is hidden by default
+        const user = await User.findOne({ email }).select('+password');
 
         if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid credentials.' });
@@ -68,13 +68,7 @@ export const signin: RequestHandler = async (req, res, next) => {
             success: true,
             accessToken,
             refreshToken,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                status: user.status
-            }
+            user: user.toJSON() // Use .toJSON() to apply schema transforms
         });
 
     } catch (error) {
@@ -82,7 +76,7 @@ export const signin: RequestHandler = async (req, res, next) => {
     }
 };
 
-export const logout: RequestHandler = (req, res, next) => {
+export const logout: express.RequestHandler = (req, res, next) => {
     // In a real-world stateless JWT implementation, logout is handled client-side by deleting tokens.
     // If using a refresh token blacklist, you would invalidate the token here.
     res.status(200).json({ success: true, message: 'Logged out successfully.' });

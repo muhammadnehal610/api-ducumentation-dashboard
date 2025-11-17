@@ -1,69 +1,70 @@
-// This file acts as a Data Access Layer for our mock database.
-// In a real application, this would be a Mongoose or other ORM model.
-import { db } from '../config/db';
-import { User as UserType, UserRole } from '../../types';
+import mongoose, { Schema, Document, Model } from 'mongoose';
+import bcrypt from 'bcryptjs';
+import { User as IUser } from '../../types';
 
-type UserCreationData = Omit<UserType, 'id' | 'createdAt' | 'updatedAt'> & { password?: string };
-type UserUpdateData = Partial<Omit<UserType, 'id' | 'password' | 'createdAt' | 'updatedAt'>>;
-
-class User {
-    static async findById(id: string): Promise<UserType | undefined> {
-        const user = db.users.find(u => u.id === id);
-        if (!user) return undefined;
-        // Return a copy to prevent mutation of the original object
-        return { ...user };
-    }
-
-    static async findByEmail(email: string): Promise<UserType | undefined> {
-        const user = db.users.find(u => u.email === email);
-        if (!user) return undefined;
-        return { ...user };
-    }
-
-    static async findAll(filters: { role?: UserRole, status?: 'active' | 'inactive' }): Promise<Omit<UserType, 'password'>[]> {
-        let filteredUsers = [...db.users];
-
-        if (filters.role) {
-            filteredUsers = filteredUsers.filter(u => u.role === filters.role);
-        }
-        if (filters.status) {
-            filteredUsers = filteredUsers.filter(u => u.status === filters.status);
-        }
-
-        // Never return passwords
-        return filteredUsers.map(({ password, ...user }) => user);
-    }
-    
-    static async create(data: UserCreationData): Promise<UserType> {
-         const newUser: UserType = {
-             id: `user_${Date.now()}`,
-             ...data,
-             status: data.status || 'active',
-             // createdAt: new Date(), // In a real DB, this would be handled
-             // updatedAt: new Date(),
-         };
-         db.users.push(newUser);
-         return { ...newUser };
-    }
-    
-    static async update(id: string, data: UserUpdateData): Promise<Omit<UserType, 'password'> | null> {
-        const userIndex = db.users.findIndex(u => u.id === id);
-        if (userIndex === -1) {
-            return null;
-        }
-        
-        const updatedUser = { ...db.users[userIndex], ...data };
-        db.users[userIndex] = updatedUser;
-        
-        const { password, ...userWithoutPassword } = updatedUser;
-        return userWithoutPassword;
-    }
-    
-    static async delete(id: string): Promise<boolean> {
-        const initialLength = db.users.length;
-        db.users = db.users.filter(u => u.id !== id);
-        return db.users.length < initialLength;
-    }
+// Extend the IUser interface to include Mongoose's Document properties
+export interface IUserDocument extends IUser, Document {
+    // Mongoose adds its own `id` virtual getter, so the `id` from IUser is fine.
 }
+
+const UserSchema: Schema<IUserDocument> = new Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        match: [/.+\@.+\..+/, 'Please fill a valid email address'],
+    },
+    password: {
+        type: String,
+        required: true,
+        select: false, // Don't return password by default
+    },
+    role: {
+        type: String,
+        enum: ['frontend', 'backend'],
+        required: true,
+    },
+    status: {
+        type: String,
+        enum: ['active', 'inactive'],
+        default: 'active',
+    },
+}, {
+    timestamps: true, // Adds createdAt and updatedAt timestamps
+    toJSON: { 
+        virtuals: true,
+        transform(doc, ret) {
+            ret.id = ret._id;
+            delete ret._id;
+            delete ret.__v;
+            delete ret.password;
+        }
+    },
+    toObject: {
+        virtuals: true,
+        transform(doc, ret) {
+            ret.id = ret._id;
+            delete ret._id;
+            delete ret.__v;
+            delete ret.password;
+        }
+    }
+});
+
+// Hash password before saving
+UserSchema.pre<IUserDocument>('save', async function (next) {
+    if (!this.isModified('password') || !this.password) {
+        return next();
+    }
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
+
+const User: Model<IUserDocument> = mongoose.model<IUserDocument>('User', UserSchema);
 
 export default User;
