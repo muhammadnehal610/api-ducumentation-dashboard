@@ -8,6 +8,7 @@ interface IParam {
     type: string;
     required: boolean;
     description: string;
+    exampleValue?: string;
 }
 
 interface IResponseExample {
@@ -39,7 +40,8 @@ const ParamSchema: Schema = new Schema({
     name: { type: String, required: true },
     type: { type: String, required: true },
     required: { type: Boolean, required: true },
-    description: { type: String, required: true }
+    description: { type: String, required: true },
+    exampleValue: { type: String, required: false }
 }, { _id: false });
 
 const ResponseExampleSchema: Schema = new Schema({

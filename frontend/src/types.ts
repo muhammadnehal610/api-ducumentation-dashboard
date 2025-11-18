@@ -60,6 +60,7 @@ export interface Param {
     type: string;
     required: boolean;
     description: string;
+    exampleValue?: string;
 }
 
 export interface ResponseExample {

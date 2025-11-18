@@ -20,7 +20,7 @@ type FormResponse = {
 const getUniqueId = () => `item-${Date.now()}-${Math.random()}`;
 const paramTypeOptions = ['string', 'number', 'boolean', 'object', 'array'];
 const bodyParamTypeOptions = [...paramTypeOptions, 'file'];
-const emptyParam: Omit<FormParam, 'id'> = { name: '', type: 'string', required: false, description: '' };
+const emptyParam: Omit<FormParam, 'id'> = { name: '', type: 'string', required: false, description: '', exampleValue: '' };
 const emptyResponse: Omit<FormResponse, 'id'> = { code: 200, description: '', fields: [], body: '{}' };
 
 interface ListManager<T extends { id: string | number }> {
@@ -41,11 +41,12 @@ const DynamicParamTable: React.FC<{ title: string; items: FormParam[]; manager: 
     <div className="space-y-2">
         <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200 mt-4">{title}</h4>
         {items.map((item) => (
-            <div key={item.id} className="grid grid-cols-1 md:grid-cols-[2fr,1.5fr,3fr,auto,auto] gap-2 items-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
+            <div key={item.id} className="grid grid-cols-1 md:grid-cols-[1.5fr,1fr,1.5fr,2.5fr,auto,auto] gap-2 items-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
                 <input value={item.name} onChange={e => manager.update(item.id, 'name', e.target.value)} placeholder="Name" className="w-full p-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm" />
                 <select value={item.type} onChange={e => manager.update(item.id, 'type', e.target.value)} className="w-full p-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm">
                     {typeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                 </select>
+                <input value={item.exampleValue || ''} onChange={e => manager.update(item.id, 'exampleValue', e.target.value)} placeholder="Example" className="w-full p-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm" />
                 <input value={item.description} onChange={e => manager.update(item.id, 'description', e.target.value)} placeholder="Description" className="w-full p-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm" />
                 <div className="flex items-center justify-center space-x-2"><Switch id={`required-${title}-${item.id}`} checked={item.required} onChange={checked => manager.update(item.id, 'required', checked)} /></div>
                 <button type="button" onClick={() => manager.remove(item.id)} className="text-red-500 hover:text-red-700 p-1 justify-self-end md:justify-self-center"><Trash2 size={16}/></button>
@@ -56,7 +57,7 @@ const DynamicParamTable: React.FC<{ title: string; items: FormParam[]; manager: 
 );
 
 const ResponseEditor: React.FC<{ title: string; items: FormResponse[]; manager: any; }> = ({ title, items, manager }) => (
-    <Card title={title}>
+    <Card title={title} collapsible defaultOpen={title.includes('Success')}>
         {items.map((res) => {
             const fieldManager: ListManager<FormParam> = {
                 update: (fieldId, fieldProp, value) => manager.updateField(res.id, fieldId, fieldProp, value),
@@ -106,7 +107,7 @@ const EndpointFormPage: React.FC = () => {
   const populateForm = useCallback((endpoint: Endpoint) => {
     setMethod(endpoint.method); setPath(endpoint.path); setDescription(endpoint.description); setModuleId(endpoint.moduleId);
     setAuthRequired(endpoint.authRequired); setBodyExample(endpoint.bodyExample || '{}');
-    const mapParams = (p: Param[] = []) => p.map(i => ({ ...i, id: getUniqueId() }));
+    const mapParams = (p: Param[] = []) => p.map(i => ({ ...i, id: getUniqueId(), exampleValue: i.exampleValue || '' }));
     const mapResponses = (r: ResponseExample[] = [], d: Omit<FormResponse, 'id'>) => r.length > 0 ? r.map(i => ({ id: getUniqueId(), code: i.code, description: i.description, fields: mapParams(i.fields), body: JSON.stringify(i.body, null, 2) })) : [{ ...d, id: getUniqueId() }];
     setPathParams(mapParams(endpoint.pathParams));
     setHeaders(mapParams(endpoint.headers)); 
@@ -182,12 +183,12 @@ const EndpointFormPage: React.FC = () => {
               <div className="md:col-span-2"><label className="block text-sm font-medium mb-1">Description</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full p-2 bg-gray-100 dark:bg-gray-800 border rounded-md"></textarea></div>
           </div>
       </Card>
-      <Card title="Request Parameters">
+      <Card title="Request Parameters" collapsible defaultOpen={true}>
         <DynamicParamTable title="Path Parameters" items={pathParams} manager={pathParamManager} typeOptions={paramTypeOptions} />
         <DynamicParamTable title="Headers" items={headers} manager={headerManager} typeOptions={paramTypeOptions} />
         <DynamicParamTable title="Query Parameters" items={queryParams} manager={queryParamManager} typeOptions={paramTypeOptions} />
       </Card>
-      <Card title="Request Body"><DynamicParamTable title="Body Parameters (Schema)" items={bodyParams} manager={bodyParamManager} typeOptions={bodyParamTypeOptions} /><div className="mt-4"><label className="block text-sm font-medium mb-1">Example Body (JSON)</label><JsonEditor value={bodyExample} onChange={setBodyExample} /></div></Card>
+      <Card title="Request Body" collapsible defaultOpen={true}><DynamicParamTable title="Body Parameters (Schema)" items={bodyParams} manager={bodyParamManager} typeOptions={bodyParamTypeOptions} /><div className="mt-4"><label className="block text-sm font-medium mb-1">Example Body (JSON)</label><JsonEditor value={bodyExample} onChange={setBodyExample} /></div></Card>
       <ResponseEditor title="Success Responses" items={successResponses} manager={successResponseManager} />
       <ResponseEditor title="Error Responses" items={errorResponses} manager={errorResponseManager} />
     </div>
