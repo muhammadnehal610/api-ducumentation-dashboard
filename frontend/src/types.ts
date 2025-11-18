@@ -48,7 +48,9 @@ export interface Endpoint {
     pathParams?: Param[];
     headers?: Param[];
     queryParams?: Param[];
+    bodyType: 'params' | 'jsonSchema';
     bodyParams?: Param[];
+    bodyJsonSchema?: string;
     bodyExample?: string; // JSON string example for the request body
     successResponses?: ResponseExample[];
     errorResponses?: ResponseExample[];
@@ -67,7 +69,9 @@ export interface ResponseExample {
     id?: string | number; // Optional on frontend, required by DB
     code: number;
     description: string;
+    bodyType: 'fields' | 'jsonSchema';
     fields?: Param[]; // The schema for the response body
+    bodyJsonSchema?: string;
     body: Record<string, any>; // The example JSON body
 }
 

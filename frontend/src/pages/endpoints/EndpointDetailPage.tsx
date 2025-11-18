@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PlayCircle, Edit } from 'lucide-react';
@@ -22,13 +23,19 @@ const ResponseDisplay: React.FC<{ response: ResponseExample }> = ({ response }) 
             </span>
             <p className="font-semibold text-gray-700 dark:text-gray-300">{response.description}</p>
         </div>
-        <div className="border border-t-0 border-gray-200 dark:border-gray-700 rounded-b-lg p-4">
-           {response.fields && response.fields.length > 0 && (
-            <div className="mb-4">
-                <h4 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">Response Fields</h4>
-                <ParamTable title="" params={response.fields} />
-            </div>
-           )}
+        <div className="border border-t-0 border-gray-200 dark:border-gray-700 rounded-b-lg p-4 space-y-4">
+            {response.bodyType === 'jsonSchema' && response.bodyJsonSchema ? (
+                <div>
+                    <h4 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">Response Schema</h4>
+                    <JsonViewer data={JSON.parse(response.bodyJsonSchema)} />
+                </div>
+            ) : (
+                response.fields && response.fields.length > 0 && (
+                <div>
+                    <h4 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">Response Fields</h4>
+                    <ParamTable title="" params={response.fields} />
+                </div>
+            ))}
            <div>
               <h4 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">Example Body</h4>
               <JsonViewer data={response.body} />
@@ -125,7 +132,18 @@ const EndpointDetailPage: React.FC = () => {
         {hasContent(endpoint.headers) && <ParamTable title="Headers" params={endpoint.headers} />}
         {hasContent(endpoint.queryParams) && <ParamTable title="Query Parameters" params={endpoint.queryParams} />}
         
-        {hasContent(endpoint.bodyParams) && (
+        {endpoint.bodyType === 'jsonSchema' && endpoint.bodyJsonSchema ? (
+            <div>
+                <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Request Body Schema</h3>
+                <JsonViewer data={JSON.parse(endpoint.bodyJsonSchema)} />
+                 {endpoint.bodyExample && (
+                     <div className="mt-4">
+                        <h4 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">Example Body</h4>
+                        <JsonViewer data={JSON.parse(endpoint.bodyExample)} />
+                     </div>
+                )}
+            </div>
+        ) : hasContent(endpoint.bodyParams) ? (
             <div>
                 <ParamTable title="Body Parameters" params={endpoint.bodyParams} />
                 {endpoint.bodyExample && (
@@ -135,11 +153,9 @@ const EndpointDetailPage: React.FC = () => {
                      </div>
                 )}
             </div>
-        )}
-
-        {!hasContent(endpoint.pathParams) && !hasContent(endpoint.headers) && !hasContent(endpoint.queryParams) && !hasContent(endpoint.bodyParams) && (
-            <Card>
-                <p className="text-gray-500 dark:text-gray-400">No parameters defined for this endpoint.</p>
+        ) : (
+             <Card>
+                <p className="text-gray-500 dark:text-gray-400">No request body defined for this endpoint.</p>
             </Card>
         )}
       </div>

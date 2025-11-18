@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
@@ -13,7 +14,9 @@ type FormResponse = {
   id: string | number;
   code: number;
   description: string;
+  bodyType: 'fields' | 'jsonSchema';
   fields: FormParam[];
+  bodyJsonSchema: string;
   body: string;
 };
 
@@ -21,7 +24,7 @@ const getUniqueId = () => `item-${Date.now()}-${Math.random()}`;
 const paramTypeOptions = ['string', 'number', 'boolean', 'object', 'array'];
 const bodyParamTypeOptions = [...paramTypeOptions, 'file'];
 const emptyParam: Omit<FormParam, 'id'> = { name: '', type: 'string', required: false, description: '', exampleValue: '' };
-const emptyResponse: Omit<FormResponse, 'id'> = { code: 200, description: '', fields: [], body: '{}' };
+const emptyResponse: Omit<FormResponse, 'id'> = { code: 200, description: '', bodyType: 'fields', fields: [], bodyJsonSchema: '{}', body: '{}' };
 
 interface ListManager<T extends { id: string | number }> {
     update: (id: string | number, field: keyof Omit<T, 'id'>, value: any) => void;
@@ -66,13 +69,27 @@ const ResponseEditor: React.FC<{ title: string; items: FormResponse[]; manager: 
             };
             return (
                 <div key={res.id} className="space-y-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg mb-4 relative">
+                    <button type="button" onClick={() => manager.remove(res.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 p-1"><Trash2 size={16}/></button>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div><label className="block text-sm font-medium mb-1">Status Code</label><input type="number" value={res.code} onChange={e => manager.update(res.id, 'code', parseInt(e.target.value))} className="w-full p-2 bg-gray-100 dark:bg-gray-800 border rounded-md"/></div>
                         <div><label className="block text-sm font-medium mb-1">Description</label><input value={res.description} onChange={e => manager.update(res.id, 'description', e.target.value)} className="w-full p-2 bg-gray-100 dark:bg-gray-800 border rounded-md"/></div>
                     </div>
-                    <DynamicParamTable title="Response Fields (Schema)" items={res.fields} manager={fieldManager} typeOptions={paramTypeOptions} />
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Response Body Type</label>
+                      <div className="flex items-center gap-4">
+                          <label className="flex items-center"><input type="radio" name={`res-body-type-${res.id}`} value="fields" checked={res.bodyType === 'fields'} onChange={() => manager.update(res.id, 'bodyType', 'fields')} className="mr-2"/> Field by Field</label>
+                          <label className="flex items-center"><input type="radio" name={`res-body-type-${res.id}`} value="jsonSchema" checked={res.bodyType === 'jsonSchema'} onChange={() => manager.update(res.id, 'bodyType', 'jsonSchema')} className="mr-2"/> Raw JSON Schema</label>
+                      </div>
+                    </div>
+
+                    {res.bodyType === 'jsonSchema' ? (
+                      <div><label className="block text-sm font-medium mb-1 mt-4">Body JSON Schema</label><JsonEditor value={res.bodyJsonSchema} onChange={value => manager.update(res.id, 'bodyJsonSchema', value)} /></div>
+                    ) : (
+                      <DynamicParamTable title="Response Fields (Schema)" items={res.fields} manager={fieldManager} typeOptions={paramTypeOptions} />
+                    )}
+                    
                     <div><label className="block text-sm font-medium mb-1 mt-4">Example Body (JSON)</label><JsonEditor value={res.body} onChange={value => manager.update(res.id, 'body', value)} /></div>
-                    <button type="button" onClick={() => manager.remove(res.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 p-1"><Trash2 size={16}/></button>
                 </div>
             );
         })}
@@ -90,7 +107,9 @@ const EndpointFormPage: React.FC = () => {
   const [moduleId, setModuleId] = useState('');
   const [modules, setModules] = useState<Module[]>([]);
   const [authRequired, setAuthRequired] = useState(false);
-
+  
+  const [bodyType, setBodyType] = useState<'params' | 'jsonSchema'>('params');
+  const [bodyJsonSchema, setBodyJsonSchema] = useState('{}');
   const [pathParams, setPathParams] = useState<FormParam[]>([]);
   const [headers, setHeaders] = useState<FormParam[]>([]);
   const [queryParams, setQueryParams] = useState<FormParam[]>([]);
@@ -99,16 +118,33 @@ const EndpointFormPage: React.FC = () => {
   
   const [successResponses, setSuccessResponses] = useState<FormResponse[]>([{ ...emptyResponse, id: getUniqueId() }]);
   const [errorResponses, setErrorResponses] = useState<FormResponse[]>([{...emptyResponse, code: 400, body: '{\n  "error": "Bad Request"\n}', id: getUniqueId() }]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   const isEditMode = !!endpointId;
 
   const populateForm = useCallback((endpoint: Endpoint) => {
     setMethod(endpoint.method); setPath(endpoint.path); setDescription(endpoint.description); setModuleId(endpoint.moduleId);
-    setAuthRequired(endpoint.authRequired); setBodyExample(endpoint.bodyExample || '{}');
+    setAuthRequired(endpoint.authRequired); 
+    setBodyType(endpoint.bodyType || 'params');
+    setBodyJsonSchema(endpoint.bodyJsonSchema || '{}');
+    setBodyExample(endpoint.bodyExample || '{}');
+
     const mapParams = (p: Param[] = []) => p.map(i => ({ ...i, id: getUniqueId(), exampleValue: i.exampleValue || '' }));
-    const mapResponses = (r: ResponseExample[] = [], d: Omit<FormResponse, 'id'>) => r.length > 0 ? r.map(i => ({ id: getUniqueId(), code: i.code, description: i.description, fields: mapParams(i.fields), body: JSON.stringify(i.body, null, 2) })) : [{ ...d, id: getUniqueId() }];
+    
+    const mapResponses = (r: ResponseExample[] = [], d: Omit<FormResponse, 'id'>): FormResponse[] => 
+      r.length > 0 
+        ? r.map(i => ({ 
+            id: getUniqueId(), 
+            code: i.code, 
+            description: i.description,
+            bodyType: i.bodyType || 'fields',
+            fields: mapParams(i.fields), 
+            bodyJsonSchema: i.bodyJsonSchema || '{}',
+            body: JSON.stringify(i.body, null, 2) 
+          })) 
+        : [{ ...d, id: getUniqueId() }];
+
     setPathParams(mapParams(endpoint.pathParams));
     setHeaders(mapParams(endpoint.headers)); 
     setQueryParams(mapParams(endpoint.queryParams)); 
@@ -120,7 +156,6 @@ const EndpointFormPage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
         if (!serviceId) return navigate('/');
-        setIsLoading(true);
         try {
             const moduleRes = await apiClient<{ data: Module[] }>(`/modules?serviceId=${serviceId}`);
             setModules(moduleRes.data);
@@ -138,14 +173,43 @@ const EndpointFormPage: React.FC = () => {
   
   const handleSave = async () => {
     setError('');
-    const transformItems = (items: any[]) => items.map(({ id, ...rest }) => {
-        if (rest.body) { try { rest.body = JSON.parse(rest.body); } catch (e) { setError('Invalid JSON in a response body.'); throw e; } }
-        if (rest.fields) { rest.fields = rest.fields.map(({id: _, ...f}: any) => f); }
+    const transformItems = (items: any[], isResponse: boolean) => items.map(({ id, ...rest }) => {
+        if (isResponse) {
+          try { 
+            rest.body = JSON.parse(rest.body);
+            if (rest.bodyType === 'jsonSchema') rest.bodyJsonSchema = JSON.stringify(JSON.parse(rest.bodyJsonSchema));
+          } catch (e) { setError('Invalid JSON format detected.'); throw e; }
+          if(rest.bodyType === 'fields') {
+             rest.fields = rest.fields.map(({id: _, ...f}: any) => f);
+          } else {
+            delete rest.fields;
+          }
+        } else {
+           const { id, ...param } = rest;
+           return param;
+        }
         return rest;
     });
     
     try {
-        const payload = { method, path, description, moduleId, authRequired, bodyExample, serviceId, pathParams: transformItems(pathParams), headers: transformItems(headers), queryParams: transformItems(queryParams), bodyParams: transformItems(bodyParams), successResponses: transformItems(successResponses), errorResponses: transformItems(errorResponses) };
+        const payload: Partial<Endpoint> = { 
+          method, path, description, moduleId, authRequired, serviceId, 
+          bodyType,
+          pathParams: transformItems(pathParams, false), 
+          headers: transformItems(headers, false), 
+          queryParams: transformItems(queryParams, false), 
+          successResponses: transformItems(successResponses, true), 
+          errorResponses: transformItems(errorResponses, true) 
+        };
+
+        if (bodyType === 'jsonSchema') {
+            payload.bodyJsonSchema = JSON.stringify(JSON.parse(bodyJsonSchema));
+            payload.bodyExample = JSON.stringify(JSON.parse(bodyExample));
+        } else {
+            payload.bodyParams = transformItems(bodyParams, false);
+            payload.bodyExample = JSON.stringify(JSON.parse(bodyExample));
+        }
+
         if (isEditMode) {
             await apiClient(`/endpoints/${endpointId}`, { method: 'PUT', body: payload });
         } else {
@@ -188,7 +252,21 @@ const EndpointFormPage: React.FC = () => {
         <DynamicParamTable title="Headers" items={headers} manager={headerManager} typeOptions={paramTypeOptions} />
         <DynamicParamTable title="Query Parameters" items={queryParams} manager={queryParamManager} typeOptions={paramTypeOptions} />
       </Card>
-      <Card title="Request Body" collapsible defaultOpen={true}><DynamicParamTable title="Body Parameters (Schema)" items={bodyParams} manager={bodyParamManager} typeOptions={bodyParamTypeOptions} /><div className="mt-4"><label className="block text-sm font-medium mb-1">Example Body (JSON)</label><JsonEditor value={bodyExample} onChange={setBodyExample} /></div></Card>
+      <Card title="Request Body" collapsible defaultOpen={true}>
+          <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Body Definition Type</label>
+              <div className="flex items-center gap-4">
+                  <label className="flex items-center"><input type="radio" name="body-type" value="params" checked={bodyType === 'params'} onChange={() => setBodyType('params')} className="mr-2"/> Field by Field</label>
+                  <label className="flex items-center"><input type="radio" name="body-type" value="jsonSchema" checked={bodyType === 'jsonSchema'} onChange={() => setBodyType('jsonSchema')} className="mr-2"/> Raw JSON Schema</label>
+              </div>
+          </div>
+          {bodyType === 'jsonSchema' ? (
+              <div><label className="block text-sm font-medium mb-1">Body JSON Schema</label><JsonEditor value={bodyJsonSchema} onChange={setBodyJsonSchema} /></div>
+          ) : (
+            <DynamicParamTable title="Body Parameters (Schema)" items={bodyParams} manager={bodyParamManager} typeOptions={bodyParamTypeOptions} />
+          )}
+         <div className="mt-4"><label className="block text-sm font-medium mb-1">Example Body (JSON)</label><JsonEditor value={bodyExample} onChange={setBodyExample} /></div>
+      </Card>
       <ResponseEditor title="Success Responses" items={successResponses} manager={successResponseManager} />
       <ResponseEditor title="Error Responses" items={errorResponses} manager={errorResponseManager} />
     </div>
