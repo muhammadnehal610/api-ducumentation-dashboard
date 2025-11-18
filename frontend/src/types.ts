@@ -1,5 +1,6 @@
 
 
+
 export type UserRole = 'frontend' | 'backend';
 
 export interface User {
@@ -88,4 +89,14 @@ export interface SchemaField {
     required: boolean;
     constraints: string;
     description: string;
+}
+
+export type CardType = 'baseUrl' | 'auth' | 'version' | 'custom';
+
+export interface OverviewCard {
+  id: string;
+  title: string;
+  content: string;
+  icon: string;
+  cardType: CardType;
 }

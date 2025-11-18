@@ -55,11 +55,16 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5001;
 // This check ensures we only run the server when running the file directly
 // and not when it's imported by a serverless function handler.
-// FIX: Cast require and module to any to avoid type errors without Node.js types.
-if (process.env.NODE_ENV !== 'production' || (require as any).main === (module as any)) {
-    app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
-    });
+// FIX: Check for `require` and `module` existence to prevent type errors when Node.js globals are unavailable.
+if (
+  process.env.NODE_ENV !== 'production' ||
+  (typeof require !== 'undefined' &&
+    typeof module !== 'undefined' &&
+    (require as any).main === (module as any))
+) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
 }
 
 
