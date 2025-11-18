@@ -4,20 +4,19 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 // --- Interface Definitions ---
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'CONNECT' | 'TRACE';
 
-interface IParam {
+interface IField {
     name: string;
-    type: string;
+    type: 'string' | 'number' | 'boolean' | 'object' | 'array';
     required: boolean;
     description: string;
     exampleValue?: string;
+    children?: IField[];
 }
 
 interface IResponseExample {
     code: number;
     description: string;
-    bodyType: 'fields' | 'jsonSchema';
-    fields?: IParam[];
-    bodyJsonSchema?: string;
+    fields?: IField[];
     body: mongoose.Schema.Types.Mixed;
 }
 
@@ -28,12 +27,10 @@ export interface IEndpoint extends Document {
     authRequired: boolean;
     serviceId: mongoose.Types.ObjectId;
     moduleId: mongoose.Types.ObjectId;
-    pathParams?: IParam[];
-    headers?: IParam[];
-    queryParams?: IParam[];
-    bodyType: 'params' | 'jsonSchema';
-    bodyParams?: IParam[];
-    bodyJsonSchema?: string;
+    pathParams?: IField[];
+    headers?: IField[];
+    queryParams?: IField[];
+    bodyParams?: IField[];
     bodyExample?: string;
     successResponses?: IResponseExample[];
     errorResponses?: IResponseExample[];
@@ -41,20 +38,21 @@ export interface IEndpoint extends Document {
 
 // --- Schema Definitions ---
 
-const ParamSchema: Schema = new Schema({
+const FieldSchema = new Schema({
     name: { type: String, required: true },
-    type: { type: String, required: true },
-    required: { type: Boolean, required: true },
-    description: { type: String, required: true },
-    exampleValue: { type: String, required: false }
+    type: { type: String, enum: ['string', 'number', 'boolean', 'object', 'array'], required: true },
+    required: { type: Boolean, default: false },
+    description: { type: String, default: '' },
+    exampleValue: { type: String, default: '' },
 }, { _id: false });
+
+// Add recursive children property
+FieldSchema.add({ children: { type: [FieldSchema], default: undefined } });
 
 const ResponseExampleSchema: Schema = new Schema({
     code: { type: Number, required: true },
     description: { type: String, required: true },
-    bodyType: { type: String, enum: ['fields', 'jsonSchema'], default: 'fields' },
-    fields: { type: [ParamSchema], default: undefined },
-    bodyJsonSchema: { type: String },
+    fields: { type: [FieldSchema], default: undefined },
     body: { type: mongoose.Schema.Types.Mixed, required: true }
 }, { _id: false });
 
@@ -78,12 +76,10 @@ const EndpointSchema: Schema<IEndpoint> = new Schema({
         ref: 'Module',
         required: true
     },
-    pathParams: { type: [ParamSchema], default: undefined },
-    headers: { type: [ParamSchema], default: undefined },
-    queryParams: { type: [ParamSchema], default: undefined },
-    bodyType: { type: String, enum: ['params', 'jsonSchema'], default: 'params' },
-    bodyParams: { type: [ParamSchema], default: undefined },
-    bodyJsonSchema: { type: String },
+    pathParams: { type: [FieldSchema], default: undefined },
+    headers: { type: [FieldSchema], default: undefined },
+    queryParams: { type: [FieldSchema], default: undefined },
+    bodyParams: { type: [FieldSchema], default: undefined },
     bodyExample: { type: String },
     successResponses: { type: [ResponseExampleSchema], default: undefined },
     errorResponses: { type: [ResponseExampleSchema], default: undefined }
@@ -95,6 +91,8 @@ const EndpointSchema: Schema<IEndpoint> = new Schema({
             ret.id = ret._id;
             delete ret._id;
             delete ret.__v;
+            // Rename pathParams to a more generic name for reuse
+            if (ret.pathParams) { ret.fields = ret.pathParams; delete ret.pathParams; }
         }
     }
 });

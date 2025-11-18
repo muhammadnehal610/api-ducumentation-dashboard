@@ -45,33 +45,32 @@ export interface Endpoint {
     authRequired: boolean;
     serviceId: string;
     moduleId: string;
-    pathParams?: Param[];
-    headers?: Param[];
-    queryParams?: Param[];
-    bodyType: 'params' | 'jsonSchema';
-    bodyParams?: Param[];
-    bodyJsonSchema?: string;
+    pathParams?: Field[];
+    headers?: Field[];
+    queryParams?: Field[];
+    bodyParams?: Field[];
     bodyExample?: string; // JSON string example for the request body
     successResponses?: ResponseExample[];
     errorResponses?: ResponseExample[];
 }
 
-export interface Param {
+export type FieldType = 'string' | 'number' | 'boolean' | 'object' | 'array';
+
+export interface Field {
     id?: string | number; // Optional on frontend, required by DB
     name: string;
-    type: string;
+    type: FieldType;
     required: boolean;
     description: string;
     exampleValue?: string;
+    children?: Field[];
 }
 
 export interface ResponseExample {
     id?: string | number; // Optional on frontend, required by DB
     code: number;
     description: string;
-    bodyType: 'fields' | 'jsonSchema';
-    fields?: Param[]; // The schema for the response body
-    bodyJsonSchema?: string;
+    fields?: Field[]; // The schema for the response body
     body: Record<string, any>; // The example JSON body
 }
 

@@ -1,15 +1,74 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { PlayCircle, Edit } from 'lucide-react';
+import { PlayCircle, Edit, ChevronDown, ChevronRight } from 'lucide-react';
 import Badge from '../../components/ui/Badge.tsx';
 import ParamTable from '../../components/ui/ParamTable.tsx';
 import JsonViewer from '../../components/ui/JsonViewer.tsx';
-import { User, ResponseExample, Endpoint, Module } from '../../types.ts';
+import { User, ResponseExample, Endpoint, Module, Field } from '../../types.ts';
 import Card from '../../components/ui/Card.tsx';
 import { apiClient } from '../../services/apiClient.ts';
 import { useDashboardContext } from '../../components/layout/DashboardLayout.tsx';
 import Loading from '../../components/ui/Loading.tsx';
+
+
+const FieldRowDisplay: React.FC<{ field: Field, level?: number }> = ({ field, level = 0 }) => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+        <>
+            <tr className="group">
+                <td className="px-6 py-3 text-sm font-mono text-gray-800 dark:text-gray-200" style={{ paddingLeft: `${1.5 + level * 1.5}rem` }}>
+                    <div className="flex items-center">
+                        {field.children && field.children.length > 0 ? (
+                            <button onClick={() => setIsOpen(!isOpen)} className="-ml-6 mr-1 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
+                                {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                            </button>
+                        ) : <div className="w-5"></div>}
+                        {field.name}
+                    </div>
+                </td>
+                <td className="px-6 py-3 text-sm font-mono text-gray-500 dark:text-gray-400">{field.type}</td>
+                <td className="px-6 py-3 text-sm">{field.description}</td>
+                <td className="px-6 py-3 text-sm">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${field.required ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                    {field.required ? 'Yes' : 'No'}
+                  </span>
+                </td>
+            </tr>
+            {isOpen && field.children && field.children.map((child, index) => (
+                <FieldRowDisplay key={index} field={child} level={level + 1} />
+            ))}
+        </>
+    );
+};
+
+const SchemaTree: React.FC<{ title: string; fields?: Field[] }> = ({ title, fields }) => {
+    if (!fields || fields.length === 0) {
+        return null;
+    }
+    return (
+        <div className="mb-8">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">{title}</h3>
+            <div className="overflow-x-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Type</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Description</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Required</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                        {fields.map((field, index) => <FieldRowDisplay key={index} field={field} />)}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
 
 const ResponseDisplay: React.FC<{ response: ResponseExample }> = ({ response }) => (
     <div className="mb-6">
@@ -24,22 +83,11 @@ const ResponseDisplay: React.FC<{ response: ResponseExample }> = ({ response }) 
             <p className="font-semibold text-gray-700 dark:text-gray-300">{response.description}</p>
         </div>
         <div className="border border-t-0 border-gray-200 dark:border-gray-700 rounded-b-lg p-4 space-y-4">
-            {response.bodyType === 'jsonSchema' && response.bodyJsonSchema ? (
-                <div>
-                    <h4 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">Response Schema</h4>
-                    <JsonViewer data={JSON.parse(response.bodyJsonSchema)} />
-                </div>
-            ) : (
-                response.fields && response.fields.length > 0 && (
-                <div>
-                    <h4 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">Response Fields</h4>
-                    <ParamTable title="" params={response.fields} />
-                </div>
-            ))}
-           <div>
+            <SchemaTree title="Response Schema" fields={response.fields} />
+            <div>
               <h4 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">Example Body</h4>
               <JsonViewer data={response.body} />
-           </div>
+            </div>
         </div>
     </div>
 );
@@ -128,24 +176,13 @@ const EndpointDetailPage: React.FC = () => {
 
       {/* Parameters */}
       <div className="space-y-8">
-        {hasContent(endpoint.pathParams) && <ParamTable title="Path Parameters" params={endpoint.pathParams} />}
-        {hasContent(endpoint.headers) && <ParamTable title="Headers" params={endpoint.headers} />}
-        {hasContent(endpoint.queryParams) && <ParamTable title="Query Parameters" params={endpoint.queryParams} />}
+        <SchemaTree title="Path Parameters" fields={endpoint.pathParams as Field[]} />
+        <ParamTable title="Headers" params={endpoint.headers as Field[]} />
+        <ParamTable title="Query Parameters" params={endpoint.queryParams as Field[]} />
         
-        {endpoint.bodyType === 'jsonSchema' && endpoint.bodyJsonSchema ? (
+        {hasContent(endpoint.bodyParams) ? (
             <div>
-                <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Request Body Schema</h3>
-                <JsonViewer data={JSON.parse(endpoint.bodyJsonSchema)} />
-                 {endpoint.bodyExample && (
-                     <div className="mt-4">
-                        <h4 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">Example Body</h4>
-                        <JsonViewer data={JSON.parse(endpoint.bodyExample)} />
-                     </div>
-                )}
-            </div>
-        ) : hasContent(endpoint.bodyParams) ? (
-            <div>
-                <ParamTable title="Body Parameters" params={endpoint.bodyParams} />
+                <SchemaTree title="Request Body Schema" fields={endpoint.bodyParams as Field[]} />
                 {endpoint.bodyExample && (
                      <div className="mt-4">
                         <h4 className="text-md font-semibold mb-2 text-gray-700 dark:text-gray-300">Example Body</h4>

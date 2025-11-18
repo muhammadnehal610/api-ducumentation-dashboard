@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
-// FIX: Changed alias imports to relative paths with extensions for module resolution.
-import { Page, User, Param, HttpMethod, ResponseExample, Endpoint, Module } from '../../types.ts';
+// FIX: Changed 'Param' to 'Field as Param' to correct the import since 'Param' is not an exported member.
+import { Page, User, Field as Param, HttpMethod, ResponseExample, Endpoint, Module } from '../../types.ts';
 import Card from '../../components/ui/Card.tsx';
 import Switch from '../../components/ui/Switch.tsx';
 import JsonEditor from '../../components/ui/JsonEditor.tsx';

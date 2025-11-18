@@ -1,10 +1,10 @@
 import React from 'react';
-// FIX: Changed alias import to relative path with extension for module resolution.
-import { Param } from '../../types.ts';
+// FIX: Replaced non-existent 'Param' type with 'Field' to resolve import error.
+import { Field } from '../../types.ts';
 
 interface ParamTableProps {
   title: string;
-  params?: Param[];
+  params?: Field[];
 }
 
 const ParamTable: React.FC<ParamTableProps> = ({ title, params }) => {
