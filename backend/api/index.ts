@@ -1,3 +1,7 @@
+// FIX: Declare Node.js globals `require` and `module` to resolve TypeScript errors
+// in environments without full Node.js type definitions.
+declare var require: any;
+declare var module: any;
 
 import dotenv from 'dotenv';
 dotenv.config();

@@ -90,6 +90,7 @@ const EndpointFormPage: React.FC = () => {
   const [modules, setModules] = useState<Module[]>([]);
   const [authRequired, setAuthRequired] = useState(false);
 
+  const [pathParams, setPathParams] = useState<FormParam[]>([]);
   const [headers, setHeaders] = useState<FormParam[]>([]);
   const [queryParams, setQueryParams] = useState<FormParam[]>([]);
   const [bodyParams, setBodyParams] = useState<FormParam[]>([]);
@@ -107,7 +108,10 @@ const EndpointFormPage: React.FC = () => {
     setAuthRequired(endpoint.authRequired); setBodyExample(endpoint.bodyExample || '{}');
     const mapParams = (p: Param[] = []) => p.map(i => ({ ...i, id: getUniqueId() }));
     const mapResponses = (r: ResponseExample[] = [], d: Omit<FormResponse, 'id'>) => r.length > 0 ? r.map(i => ({ id: getUniqueId(), code: i.code, description: i.description, fields: mapParams(i.fields), body: JSON.stringify(i.body, null, 2) })) : [{ ...d, id: getUniqueId() }];
-    setHeaders(mapParams(endpoint.headers)); setQueryParams(mapParams(endpoint.queryParams)); setBodyParams(mapParams(endpoint.bodyParams));
+    setPathParams(mapParams(endpoint.pathParams));
+    setHeaders(mapParams(endpoint.headers)); 
+    setQueryParams(mapParams(endpoint.queryParams)); 
+    setBodyParams(mapParams(endpoint.bodyParams));
     setSuccessResponses(mapResponses(endpoint.successResponses, emptyResponse));
     setErrorResponses(mapResponses(endpoint.errorResponses, {...emptyResponse, code: 400, body: '{\n  "error": "Bad Request"\n}'}));
   }, []);
@@ -140,7 +144,7 @@ const EndpointFormPage: React.FC = () => {
     });
     
     try {
-        const payload = { method, path, description, moduleId, authRequired, bodyExample, serviceId, headers: transformItems(headers), queryParams: transformItems(queryParams), bodyParams: transformItems(bodyParams), successResponses: transformItems(successResponses), errorResponses: transformItems(errorResponses) };
+        const payload = { method, path, description, moduleId, authRequired, bodyExample, serviceId, pathParams: transformItems(pathParams), headers: transformItems(headers), queryParams: transformItems(queryParams), bodyParams: transformItems(bodyParams), successResponses: transformItems(successResponses), errorResponses: transformItems(errorResponses) };
         if (isEditMode) {
             await apiClient(`/endpoints/${endpointId}`, { method: 'PUT', body: payload });
         } else {
@@ -150,6 +154,7 @@ const EndpointFormPage: React.FC = () => {
     } catch (err: any) { if (!error) setError(err.message || 'Failed to save endpoint.'); }
   };
   
+  const pathParamManager = useMemo(() => createListUpdater(setPathParams), []);
   const headerManager = useMemo(() => createListUpdater(setHeaders), []);
   const queryParamManager = useMemo(() => createListUpdater(setQueryParams), []);
   const bodyParamManager = useMemo(() => createListUpdater(setBodyParams), []);
@@ -170,14 +175,18 @@ const EndpointFormPage: React.FC = () => {
       {error && <p className="text-red-500 bg-red-100 p-3 rounded-md">{error}</p>}
       <Card title="General Information">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><label className="block text-sm font-medium mb-1">HTTP Method</label><select value={method} onChange={e => setMethod(e.target.value as HttpMethod)} className="w-full p-2 bg-gray-100 dark:bg-gray-800 border rounded-md">{['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].map(m => <option key={m}>{m}</option>)}</select></div>
+              <div><label className="block text-sm font-medium mb-1">HTTP Method</label><select value={method} onChange={e => setMethod(e.target.value as HttpMethod)} className="w-full p-2 bg-gray-100 dark:bg-gray-800 border rounded-md">{['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'].map(m => <option key={m}>{m}</option>)}</select></div>
               <div><label className="block text-sm font-medium mb-1">URL Path</label><input value={path} onChange={e => setPath(e.target.value)} placeholder="/v1/users/{id}" className="w-full p-2 bg-gray-100 dark:bg-gray-800 border rounded-md" required /></div>
               <div><label className="block text-sm font-medium mb-1">Module</label><select value={moduleId} onChange={e => setModuleId(e.target.value)} className="w-full p-2 bg-gray-100 dark:bg-gray-800 border rounded-md">{modules.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></div>
               <div className="flex items-center pt-5"><Switch id="authRequired" checked={authRequired} onChange={setAuthRequired} /><label htmlFor="authRequired" className="ml-2 text-sm font-medium">Auth Required?</label></div>
               <div className="md:col-span-2"><label className="block text-sm font-medium mb-1">Description</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full p-2 bg-gray-100 dark:bg-gray-800 border rounded-md"></textarea></div>
           </div>
       </Card>
-      <Card title="Request Parameters"><DynamicParamTable title="Headers" items={headers} manager={headerManager} typeOptions={paramTypeOptions} /><DynamicParamTable title="Query Parameters" items={queryParams} manager={queryParamManager} typeOptions={paramTypeOptions} /></Card>
+      <Card title="Request Parameters">
+        <DynamicParamTable title="Path Parameters" items={pathParams} manager={pathParamManager} typeOptions={paramTypeOptions} />
+        <DynamicParamTable title="Headers" items={headers} manager={headerManager} typeOptions={paramTypeOptions} />
+        <DynamicParamTable title="Query Parameters" items={queryParams} manager={queryParamManager} typeOptions={paramTypeOptions} />
+      </Card>
       <Card title="Request Body"><DynamicParamTable title="Body Parameters (Schema)" items={bodyParams} manager={bodyParamManager} typeOptions={bodyParamTypeOptions} /><div className="mt-4"><label className="block text-sm font-medium mb-1">Example Body (JSON)</label><JsonEditor value={bodyExample} onChange={setBodyExample} /></div></Card>
       <ResponseEditor title="Success Responses" items={successResponses} manager={successResponseManager} />
       <ResponseEditor title="Error Responses" items={errorResponses} manager={errorResponseManager} />

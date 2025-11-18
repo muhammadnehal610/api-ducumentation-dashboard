@@ -121,6 +121,7 @@ const EndpointDetailPage: React.FC = () => {
 
       {/* Parameters */}
       <div className="space-y-8">
+        {hasContent(endpoint.pathParams) && <ParamTable title="Path Parameters" params={endpoint.pathParams} />}
         {hasContent(endpoint.headers) && <ParamTable title="Headers" params={endpoint.headers} />}
         {hasContent(endpoint.queryParams) && <ParamTable title="Query Parameters" params={endpoint.queryParams} />}
         
@@ -136,7 +137,7 @@ const EndpointDetailPage: React.FC = () => {
             </div>
         )}
 
-        {!hasContent(endpoint.headers) && !hasContent(endpoint.queryParams) && !hasContent(endpoint.bodyParams) && (
+        {!hasContent(endpoint.pathParams) && !hasContent(endpoint.headers) && !hasContent(endpoint.queryParams) && !hasContent(endpoint.bodyParams) && (
             <Card>
                 <p className="text-gray-500 dark:text-gray-400">No parameters defined for this endpoint.</p>
             </Card>

@@ -5,6 +5,7 @@ import { User, Module } from '../../types.ts';
 import Modal from '../../components/ui/Modal.tsx';
 import { apiClient } from '../../services/apiClient.ts';
 import { useDashboardContext } from '../../components/layout/DashboardLayout.tsx';
+import DeleteModuleModal from '../../components/modals/DeleteModuleModal.tsx';
 
 const ModulesPage: React.FC = () => {
   const { user } = useDashboardContext();
@@ -14,8 +15,9 @@ const ModulesPage: React.FC = () => {
   const [modules, setModules] = useState<Module[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const [moduleToDelete, setModuleToDelete] = useState<Module | null>(null);
 
   const isBackend = user.role === 'backend';
 
@@ -39,11 +41,11 @@ const ModulesPage: React.FC = () => {
 
   const handleOpenModal = (module: Module | null) => {
     setEditingModule(module);
-    setIsModalOpen(true);
+    setIsFormModalOpen(true);
   };
   
   const handleCloseModal = () => {
-      setIsModalOpen(false);
+      setIsFormModalOpen(false);
       setEditingModule(null);
   }
   
@@ -61,14 +63,15 @@ const ModulesPage: React.FC = () => {
       }
   }
 
-  const handleDelete = async (module: Module) => {
-    if (window.confirm(`Are you sure you want to delete the "${module.name}" module and all its endpoints?`)) {
-        try {
-            await apiClient(`/modules/${module.id}`, { method: 'DELETE' });
-            fetchModules();
-        } catch (err: any) {
-            alert(`Failed to delete module: ${err.message}`);
-        }
+  const handleDelete = async () => {
+    if (!moduleToDelete) return;
+    try {
+        await apiClient(`/modules/${moduleToDelete.id}`, { method: 'DELETE' });
+        fetchModules();
+        setModuleToDelete(null); // Close modal on success
+    } catch (err: any) {
+        alert(`Failed to delete module: ${err.message}`);
+        setModuleToDelete(null); // Close modal on error
     }
   }
 
@@ -109,7 +112,7 @@ const ModulesPage: React.FC = () => {
                         {isBackend && (
                              <div className="flex items-center ml-2 border-l border-gray-200 dark:border-gray-700 pl-2">
                                 <button onClick={() => handleOpenModal(module)} className="text-gray-400 hover:text-primary-500 p-1"><Edit size={16} /></button>
-                                <button onClick={() => handleDelete(module)} className="text-gray-400 hover:text-red-500 p-1"><Trash2 size={16} /></button>
+                                <button onClick={() => setModuleToDelete(module)} className="text-gray-400 hover:text-red-500 p-1"><Trash2 size={16} /></button>
                             </div>
                         )}
                     </div>
@@ -122,7 +125,13 @@ const ModulesPage: React.FC = () => {
                 )}
             </div>
         )}
-        <ModuleFormModal isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleSaveModule} module={editingModule} />
+        <ModuleFormModal isOpen={isFormModalOpen} onClose={handleCloseModal} onSave={handleSaveModule} module={editingModule} />
+        <DeleteModuleModal 
+            isOpen={!!moduleToDelete}
+            onClose={() => setModuleToDelete(null)}
+            onConfirm={handleDelete}
+            module={moduleToDelete}
+        />
     </div>
   );
 };

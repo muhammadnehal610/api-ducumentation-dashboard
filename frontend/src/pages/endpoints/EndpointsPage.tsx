@@ -6,7 +6,7 @@ import Badge from '../../components/ui/Badge.tsx';
 import { apiClient } from '../../services/apiClient.ts';
 import { useDashboardContext } from '../../components/layout/DashboardLayout.tsx';
 
-const methodFilters: HttpMethod[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+const methodFilters: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'];
 const ITEMS_PER_PAGE = 10;
 
 const EndpointsPage: React.FC = () => {
@@ -124,10 +124,10 @@ const EndpointsPage: React.FC = () => {
             className="pl-10 pr-4 py-2 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 flex-wrap justify-center gap-2">
           {methodFilters.map(method => (
             <button key={method} onClick={() => toggleFilter(method)}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${activeFilters.has(method) ? 'bg-primary-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'}`}>
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${activeFilters.has(method) ? 'bg-primary-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'}`}>
               {method}
             </button>
           ))}

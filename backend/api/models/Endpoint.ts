@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 // --- Interface Definitions ---
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'CONNECT' | 'TRACE';
 
 interface IParam {
     name: string;
@@ -24,6 +24,7 @@ export interface IEndpoint extends Document {
     authRequired: boolean;
     serviceId: mongoose.Types.ObjectId;
     moduleId: mongoose.Types.ObjectId;
+    pathParams?: IParam[];
     headers?: IParam[];
     queryParams?: IParam[];
     bodyParams?: IParam[];
@@ -52,7 +53,7 @@ const ResponseExampleSchema: Schema = new Schema({
 const EndpointSchema: Schema<IEndpoint> = new Schema({
     method: {
         type: String,
-        enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        enum: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD', 'CONNECT', 'TRACE'],
         required: true
     },
     path: { type: String, required: true },
@@ -68,6 +69,7 @@ const EndpointSchema: Schema<IEndpoint> = new Schema({
         ref: 'Module',
         required: true
     },
+    pathParams: { type: [ParamSchema], default: undefined },
     headers: { type: [ParamSchema], default: undefined },
     queryParams: { type: [ParamSchema], default: undefined },
     bodyParams: { type: [ParamSchema], default: undefined },

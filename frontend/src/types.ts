@@ -35,7 +35,7 @@ export interface Module {
     serviceId: string;
 }
 
-export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'CONNECT' | 'TRACE';
 
 export interface Endpoint {
     id: string;
@@ -45,6 +45,7 @@ export interface Endpoint {
     authRequired: boolean;
     serviceId: string;
     moduleId: string;
+    pathParams?: Param[];
     headers?: Param[];
     queryParams?: Param[];
     bodyParams?: Param[];
