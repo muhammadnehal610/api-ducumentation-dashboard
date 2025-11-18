@@ -64,18 +64,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ user, onLogout
       setIsLoading(true);
       setError('');
       try {
-        const response = await apiClient<{ data: Service[] }>('/services');
-        const currentService = response.data.find(s => s.id === serviceId);
-        if (currentService) {
-          setService(currentService);
-          localStorage.setItem('selectedService', JSON.stringify(currentService));
-        } else {
-          setError('Service not found.');
-          localStorage.removeItem('selectedService');
-          setTimeout(() => navigate('/'), 2000); // Redirect if service is invalid
-        }
-      } catch (err) {
-        setError('Failed to load service data.');
+        const response = await apiClient<{ data: Service }>(`/services/${serviceId}`);
+        const currentService = response.data;
+        setService(currentService);
+        localStorage.setItem('selectedService', JSON.stringify(currentService));
+      } catch (err: any) {
+        setError(err.message || 'Failed to load service data.');
+        localStorage.removeItem('selectedService');
         setTimeout(() => navigate('/'), 2000);
       } finally {
         setIsLoading(false);

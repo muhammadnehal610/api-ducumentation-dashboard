@@ -1,8 +1,10 @@
 
 
+
 import { Router } from 'express';
 import {
     getServices,
+    getServiceById,
     createService,
     updateService,
     deleteService
@@ -11,16 +13,13 @@ import { protect, authorize } from '../middleware/authMiddleware';
 
 const router = Router();
 
-// Public route to get all services for the selection dropdown
-router.route('/').get(getServices);
+// Public routes
+router.get('/', getServices);
+router.get('/:id', getServiceById);
 
-// All subsequent routes are protected and for backend users only
-router.use(protect, authorize('backend'));
-
-router.route('/').post(createService);
-
-router.route('/:id')
-    .put(updateService)
-    .delete(deleteService);
+// Protected (backend only) routes
+router.post('/', protect, authorize('backend'), createService);
+router.put('/:id', protect, authorize('backend'), updateService);
+router.delete('/:id', protect, authorize('backend'), deleteService);
 
 export default router;

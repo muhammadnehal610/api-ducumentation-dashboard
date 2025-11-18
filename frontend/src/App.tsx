@@ -98,7 +98,7 @@ const App: React.FC = () => {
   return (
     <Suspense fallback={<Loading />}>
       <Routes>
-        <Route path="/:serviceId/*" element={<DashboardLayout user={currentUser} onLogout={handleLogout} />}>
+        <Route path="/:serviceId" element={<DashboardLayout user={currentUser} onLogout={handleLogout} />}>
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="modules" element={<ModulesPage />} />
             <Route path="modules/:moduleId" element={<ModuleDetailPage />} />

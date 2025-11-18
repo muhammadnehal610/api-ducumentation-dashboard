@@ -1,5 +1,3 @@
-// FIX: Add a reference to Node.js types to resolve the type error for `__dirname`.
-/// <reference types="node" />
 
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -10,7 +8,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      // FIX: Use import.meta.url to get directory path without relying on Node.js types for __dirname.
+      '@': path.resolve(new URL('.', import.meta.url).pathname, 'src'),
     },
   },
 })

@@ -1,7 +1,4 @@
 
-
-// FIX: Add a reference to Node.js types to resolve type errors for `require` and `module`.
-/// <reference types="node" />
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -58,7 +55,8 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5001;
 // This check ensures we only run the server when running the file directly
 // and not when it's imported by a serverless function handler.
-if (process.env.NODE_ENV !== 'production' || require.main === module) {
+// FIX: Cast require and module to any to avoid type errors without Node.js types.
+if (process.env.NODE_ENV !== 'production' || (require as any).main === (module as any)) {
     app.listen(PORT, () => {
         console.log(`Server is running on http://localhost:${PORT}`);
     });

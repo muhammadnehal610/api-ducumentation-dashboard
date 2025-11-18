@@ -1,5 +1,4 @@
-// FIX: Add a reference to Node.js types to resolve the type error for `process.exit`.
-/// <reference types="node" />
+
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
@@ -14,7 +13,8 @@ const connectDB = async () => {
         console.log(`MongoDB Connected: ${conn.connection.host}`);
     } catch (error: any) {
         console.error(`Error: ${error.message}`);
-        process.exit(1);
+        // FIX: Cast process to any to access 'exit' without Node.js types.
+        (process as any).exit(1);
     }
 };
 
